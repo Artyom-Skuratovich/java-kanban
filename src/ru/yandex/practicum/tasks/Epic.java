@@ -6,16 +6,23 @@ import java.util.HashMap;
 public class Epic extends Task {
     private final HashMap<Integer, Subtask> subtasks;
 
-    public Epic(int id, String name, String description, Iterable<Subtask> subtasks) {
+    public Epic(int id, String name, String description) {
         super(id, name, description, TaskStatus.NEW);
         this.subtasks = new HashMap<>();
-        for (Subtask subtask : subtasks) {
-            this.subtasks.put(subtask.getId(), subtask);
-        }
     }
 
     public Collection<Subtask> getSubtasks() {
         return subtasks.values();
+    }
+
+    public void addSubtask(Subtask subtask) {
+        if (subtask != null) {
+            subtasks.put(subtask.getId(), subtask);
+        }
+    }
+
+    public void removeSubtask(int id) {
+        subtasks.remove(id);
     }
 
     @Override
