@@ -1,9 +1,10 @@
 package ru.yandex.practicum.tasks;
 
+
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 public class TaskManager {
     private final HashMap<Integer, Task> ordinaryTasks;
@@ -16,7 +17,7 @@ public class TaskManager {
         epics = new HashMap<>();
     }
 
-    public Collection<Task> getTasks(Task task) {
+    public List<Task> getTasks(Task task) {
         if (task == null) {
             throw new IllegalArgumentException();
         }
@@ -26,7 +27,7 @@ public class TaskManager {
         } else if (task instanceof Subtask) {
             return new ArrayList<>(subtasks.values());
         }
-        return ordinaryTasks.values();
+        return new ArrayList<>(ordinaryTasks.values());
     }
 
     public void removeAll(Task task) {
@@ -114,10 +115,10 @@ public class TaskManager {
         }
     }
 
-    public Collection<Subtask> getSubtasksForEpic(int epicId) {
+    public List<Subtask> getSubtasksForEpic(int epicId) {
         Epic epic = epics.getOrDefault(epicId, null);
         if (epic != null) {
-            return epic.getSubtasks();
+            return new ArrayList<>(epic.getSubtasks());
         }
         return Collections.emptyList();
     }

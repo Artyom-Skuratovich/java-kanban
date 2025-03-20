@@ -1,7 +1,8 @@
 package ru.yandex.practicum.tasks;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class Epic extends Task {
     private final HashMap<Integer, Subtask> subtasks;
@@ -11,8 +12,8 @@ public class Epic extends Task {
         this.subtasks = new HashMap<>();
     }
 
-    public Collection<Subtask> getSubtasks() {
-        return subtasks.values();
+    public List<Subtask> getSubtasks() {
+        return new ArrayList<>(subtasks.values());
     }
 
     public void addSubtask(Subtask subtask) {
