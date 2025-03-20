@@ -30,30 +30,30 @@ public class Main {
         System.out.println("################################## ALL TASKS, SUBTASKS, EPICS ##################################\n");
 
         System.out.println("TASKS:");
-        printTasks(taskManager.getTasks(Task.class));
+        printTasks(taskManager.getTasks(firstTask));
         System.out.println("SUBTASKS:");
-        printSubtasks(taskManager.getTasks(Subtask.class));
+        printSubtasks(taskManager.getTasks(firstSubtask));
         System.out.println("EPICS:");
-        printEpics(taskManager.getTasks(Epic.class));
+        printEpics(taskManager.getTasks(firstEpic));
 
         System.out.println("########### CHANGE STATUS FOR SECOND SUBTASK STATUS, PRINT SECOND SUBTASK AND FIRST EPIC ###########\n");
 
         secondSubtask = new Subtask(secondSubtask.getId(), secondSubtask.getName(), secondSubtask.getDescription(), TaskStatus.NEW, firstEpic);
         taskManager.updateTask(secondSubtask);
-        printTask(taskManager.getTaskOrNull(secondSubtask.getId(), Subtask.class));
+        printTask(taskManager.getTaskOrNull(secondSubtask.getId(), firstSubtask));
         System.out.println("\n---------------------------------------------------\n");
-        printEpic(taskManager.getTaskOrNull(secondSubtask.getParentEpic().getId(), Epic.class));
+        printEpic((Epic) taskManager.getTaskOrNull(secondSubtask.getParentEpic().getId(), firstEpic));
 
         System.out.println("\n###################### ALL TASKS LISTS AFTER REMOVE SECOND TASK AND FIRST EPIC ######################\n");
 
-        taskManager.removeTaskById(secondTask.getId(), Task.class);
-        taskManager.removeTaskById(firstEpic.getId(), Epic.class);
+        taskManager.removeTaskById(secondTask.getId(), firstTask);
+        taskManager.removeTaskById(firstEpic.getId(), firstEpic);
         System.out.println("TASKS:");
-        printTasks(taskManager.getTasks(Task.class));
+        printTasks(taskManager.getTasks(firstTask));
         System.out.println("SUBTASKS:");
-        printSubtasks(taskManager.getTasks(Subtask.class));
+        printSubtasks(taskManager.getTasks(firstSubtask));
         System.out.println("EPICS:");
-        printEpics(taskManager.getTasks(Epic.class));
+        printEpics(taskManager.getTasks(firstEpic));
     }
 
     private static void printTask(Task task) {
@@ -78,15 +78,15 @@ public class Main {
         System.out.println();
     }
 
-    private static void printSubtasks(Collection<Subtask> subtasks) {
+    private static void printSubtasks(Collection<Task> subtasks) {
         System.out.println();
         subtasks.forEach(Main::printTask);
         System.out.println();
     }
 
-    private static void printEpics(Collection<Epic> epics) {
+    private static void printEpics(Collection<Task> epics) {
         System.out.println();
-        epics.forEach(Main::printEpic);
+        epics.forEach(t -> printEpic((Epic) t));
         System.out.println();
     }
 }
