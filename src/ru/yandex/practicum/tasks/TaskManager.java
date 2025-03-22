@@ -1,10 +1,7 @@
 package ru.yandex.practicum.tasks;
 
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class TaskManager {
     private final HashMap<Integer, Task> ordinaryTasks;
@@ -49,19 +46,19 @@ public class TaskManager {
         }
     }
 
-    public Task getTaskOrNull(int id, Task task) {
+    public Optional<Task> getTask(int id, Task task) {
         if (task == null) {
             throw new IllegalArgumentException();
         }
 
         if ((task instanceof Epic) && epics.containsKey(id)) {
-            return epics.get(id);
+            return Optional.of(epics.get(id));
         } else if ((task instanceof Subtask) && subtasks.containsKey(id)) {
-            return subtasks.get(id);
+            return Optional.of(subtasks.get(id));
         } else if (ordinaryTasks.containsKey(id)) {
-            return ordinaryTasks.get(id);
+            return Optional.of(ordinaryTasks.get(id));
         }
-        return null;
+        return Optional.empty();
     }
 
     public void createTask(Task task) {
@@ -69,8 +66,7 @@ public class TaskManager {
             throw new IllegalArgumentException();
         }
 
-        if (task.getClass() == Epic.class) {
-            Epic epic = (Epic) task;
+        if (task instanceof Epic epic) {
             Epic previous = epics.putIfAbsent(epic.getId(), epic);
             if ((epic.getSubtasks() != null) && (previous == null)) {
                 epic.getSubtasks().forEach(s -> {

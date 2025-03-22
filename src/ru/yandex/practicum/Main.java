@@ -4,6 +4,7 @@ import ru.yandex.practicum.tasks.*;
 import ru.yandex.practicum.utils.UniqueIdCreator;
 
 import java.util.Collection;
+import java.util.Optional;
 
 public class Main {
 
@@ -40,9 +41,11 @@ public class Main {
 
         secondSubtask = new Subtask(secondSubtask.getId(), secondSubtask.getName(), secondSubtask.getDescription(), TaskStatus.NEW, firstEpic);
         taskManager.updateTask(secondSubtask);
-        printTask(taskManager.getTaskOrNull(secondSubtask.getId(), firstSubtask));
+        Optional<Task> task = taskManager.getTask(secondSubtask.getId(), firstSubtask);
+        task.ifPresent(Main::printTask);
         System.out.println("\n---------------------------------------------------\n");
-        printEpic((Epic) taskManager.getTaskOrNull(secondSubtask.getParentEpic().getId(), firstEpic));
+        Optional<Task> epic = taskManager.getTask(secondSubtask.getParentEpic().getId(), firstEpic);
+        epic.ifPresent(t -> printEpic((Epic) t));
 
         System.out.println("\n###################### ALL TASKS LISTS AFTER REMOVE SECOND TASK AND FIRST EPIC ######################\n");
 
