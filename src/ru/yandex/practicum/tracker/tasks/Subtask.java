@@ -1,4 +1,4 @@
-package ru.yandex.practicum.tasks;
+package ru.yandex.practicum.tracker.tasks;
 
 public class Subtask extends Task {
     private final Epic parentEpic;

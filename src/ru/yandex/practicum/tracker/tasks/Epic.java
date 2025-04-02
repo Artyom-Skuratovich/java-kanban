@@ -1,34 +1,24 @@
-package ru.yandex.practicum.tasks;
+package ru.yandex.practicum.tracker.tasks;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 public class Epic extends Task {
-    private final HashMap<Integer, Subtask> subtasks;
+    private final HashMap<Integer, Subtask> subtasksMap;
 
     public Epic(int id, String name, String description) {
         super(id, name, description, TaskStatus.NEW);
-        this.subtasks = new HashMap<>();
+        subtasksMap = new HashMap<>();
     }
 
     public List<Subtask> getSubtasks() {
-        return new ArrayList<>(subtasks.values());
-    }
-
-    public void addSubtask(Subtask subtask) {
-        if (subtask != null) {
-            subtasks.put(subtask.getId(), subtask);
-        }
-    }
-
-    public void removeSubtask(int id) {
-        subtasks.remove(id);
+        return new ArrayList<>(subtasksMap.values());
     }
 
     @Override
     public TaskStatus getStatus() {
-        if (subtasks.isEmpty() || checkSubtasksStatus(TaskStatus.NEW)) {
+        if (subtasksMap.isEmpty() || checkSubtasksStatus(TaskStatus.NEW)) {
             status = TaskStatus.NEW;
         } else if (checkSubtasksStatus(TaskStatus.DONE)) {
             status = TaskStatus.DONE;
@@ -38,7 +28,14 @@ public class Epic extends Task {
         return status;
     }
 
+    public void setSubtasks(Iterable<Subtask> subtasks) {
+        if (subtasks != null) {
+            subtasksMap.clear();
+            subtasks.forEach(s -> subtasksMap.put(s.getId(), s));
+        }
+    }
+
     private boolean checkSubtasksStatus(TaskStatus status) {
-        return subtasks.values().stream().allMatch(s -> s.getStatus() == status);
+        return this.subtasksMap.values().stream().allMatch(s -> s.getStatus() == status);
     }
 }

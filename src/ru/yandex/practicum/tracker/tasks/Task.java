@@ -1,4 +1,4 @@
-package ru.yandex.practicum.tasks;
+package ru.yandex.practicum.tracker.tasks;
 
 import java.util.Objects;
 
