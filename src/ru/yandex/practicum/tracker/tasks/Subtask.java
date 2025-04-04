@@ -1,14 +1,14 @@
 package ru.yandex.practicum.tracker.tasks;
 
 public class Subtask extends Task {
-    private final Epic parentEpic;
+    private final int parentEpicId;
 
-    public Subtask(int id, String name, String description, TaskStatus status, Epic parentEpic) {
+    public Subtask(int id, String name, String description, TaskStatus status, int parentEpicId) {
         super(id, name, description, status);
-        this.parentEpic = parentEpic;
+        this.parentEpicId = parentEpicId;
     }
 
-    public Epic getParentEpic() {
-        return parentEpic;
+    public int getParentEpicId() {
+        return parentEpicId;
     }
 }

@@ -5,6 +5,8 @@ import ru.yandex.practicum.tracker.tasks.Subtask;
 import ru.yandex.practicum.tracker.tasks.Task;
 import ru.yandex.practicum.tracker.tasks.TaskStatus;
 import ru.yandex.practicum.tracker.tasks.managers.InMemoryTaskManager;
+import ru.yandex.practicum.tracker.tasks.managers.Managers;
+import ru.yandex.practicum.tracker.tasks.managers.TaskManager;
 
 import java.util.List;
 
@@ -22,11 +24,11 @@ public class Main {
         Epic firstEpic = new Epic(InMemoryTaskManager.generateId(), "First epic", "");
         Epic secondEpic = new Epic(InMemoryTaskManager.generateId(), "Second epic", "");
 
-        Subtask firstSubtask = new Subtask(InMemoryTaskManager.generateId(), "The first", "", TaskStatus.NEW, firstEpic);
-        Subtask secondSubtask = new Subtask(InMemoryTaskManager.generateId(), "The second", "", TaskStatus.NEW, firstEpic);
-        Subtask thirdSubtask = new Subtask(InMemoryTaskManager.generateId(), "The third", "", TaskStatus.DONE, secondEpic);
+        Subtask firstSubtask = new Subtask(InMemoryTaskManager.generateId(), "The first", "", TaskStatus.NEW, firstEpic.getId());
+        Subtask secondSubtask = new Subtask(InMemoryTaskManager.generateId(), "The second", "", TaskStatus.NEW, firstEpic.getId());
+        Subtask thirdSubtask = new Subtask(InMemoryTaskManager.generateId(), "The third", "", TaskStatus.DONE, secondEpic.getId());
 
-        InMemoryTaskManager taskManager = new InMemoryTaskManager();
+        TaskManager taskManager = Managers.getDefault();
         taskManager.createOrdinaryTask(firstTask);
         taskManager.createOrdinaryTask(secondTask);
         taskManager.createEpic(firstEpic);
@@ -42,7 +44,7 @@ public class Main {
         System.out.println("******** DATA AFTER UPDATE ********\n");
 
         firstTask = new Task(firstTask.getId(), firstTask.getName(), firstTask.getDescription(), TaskStatus.IN_PROGRESS);
-        secondSubtask = new Subtask(secondSubtask.getId(), secondSubtask.getName(), "", TaskStatus.DONE, firstEpic);
+        secondSubtask = new Subtask(secondSubtask.getId(), secondSubtask.getName(), "", TaskStatus.DONE, firstEpic.getId());
         taskManager.updateOrdinaryTask(firstTask);
         taskManager.updateSubtask(secondSubtask);
 
@@ -80,7 +82,7 @@ public class Main {
             System.out.println("---- Name: " + subtask.getName());
             System.out.println("---- Description: " + subtask.getDescription());
             System.out.println("---- Status: " + subtask.getStatus());
-            System.out.println("---- Parent epic Id: " + subtask.getParentEpic().getId());
+            System.out.println("---- Parent epic Id: " + subtask.getParentEpicId());
             if (i != subtasks.size() - 1) {
                 System.out.println();
             }
@@ -92,7 +94,7 @@ public class Main {
         System.out.println("Name: " + subtask.getName());
         System.out.println("Description: " + subtask.getDescription());
         System.out.println("Status: " + subtask.getStatus());
-        System.out.println("Parent epic Id: " + subtask.getParentEpic().getId());
+        System.out.println("Parent epic Id: " + subtask.getParentEpicId());
     }
 
     private static void printOrdinaryTasks(Iterable<Task> ordinaryTasks) {

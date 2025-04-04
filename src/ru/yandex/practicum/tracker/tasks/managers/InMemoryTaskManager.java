@@ -13,14 +13,17 @@ public class InMemoryTaskManager implements TaskManager {
     private final HistoryManager historyManager;
     private static int nextId = 1;
 
-    public InMemoryTaskManager() {
+    public InMemoryTaskManager(HistoryManager historyManager) {
+        if (historyManager == null) {
+            throw new IllegalArgumentException();
+        }
+        this.historyManager = historyManager;
         ordinaryTasksMap = new HashMap<>();
         subtasksMap = new HashMap<>();
         epicsMap = new HashMap<>();
-        historyManager = Managers.getDefaultHistory();
     }
 
-    public static int generateId() {
+    public static synchronized int generateId() {
         return nextId++;
     }
 
@@ -115,7 +118,7 @@ public class InMemoryTaskManager implements TaskManager {
         if (subtask == null) {
             throw new IllegalArgumentException();
         }
-        Epic parentEpic = subtask.getParentEpic();
+        Epic parentEpic = epicsMap.get(subtask.getParentEpicId());
         if ((parentEpic != null) && (subtasksMap.putIfAbsent(subtask.getId(), subtask) == null)) {
             epicsMap.put(parentEpic.getId(), parentEpic);
             List<Subtask> subtasks = parentEpic.getSubtasks();
@@ -141,7 +144,7 @@ public class InMemoryTaskManager implements TaskManager {
     public void removeSubtask(int id) {
         Subtask removedSubtask = subtasksMap.remove(id);
         if (removedSubtask != null) {
-            Epic parentEpic = removedSubtask.getParentEpic();
+            Epic parentEpic = epicsMap.get(removedSubtask.getParentEpicId());
             if (parentEpic != null) {
                 List<Subtask> subtasks = parentEpic.getSubtasks();
                 subtasks.remove(removedSubtask);
@@ -166,8 +169,14 @@ public class InMemoryTaskManager implements TaskManager {
             throw new IllegalArgumentException();
         }
         if (epicsMap.containsKey(epic.getId())) {
-            epicsMap.put(epic.getId(), epic);
-            epic.getSubtasks().forEach(s -> subtasksMap.put(s.getId(), s));
+            Epic oldEpic = epicsMap.put(epic.getId(), epic);
+            List<Subtask> newSubtasks = epic.getSubtasks();
+            if (oldEpic != null) {
+                List<Subtask> oldSubtasks = oldEpic.getSubtasks();
+                List<Subtask> forRemove = oldSubtasks.stream().filter(s -> !newSubtasks.contains(s)).toList();
+                forRemove.forEach(s -> subtasksMap.remove(s.getId()));
+            }
+            newSubtasks.forEach(s -> subtasksMap.put(s.getId(), s));
         }
     }
 
@@ -178,7 +187,7 @@ public class InMemoryTaskManager implements TaskManager {
         }
         if (subtasksMap.containsKey(subtask.getId())) {
             subtasksMap.put(subtask.getId(), subtask);
-            Epic parentEpic = subtask.getParentEpic();
+            Epic parentEpic = epicsMap.get(subtask.getParentEpicId());
             if (parentEpic != null) {
                 List<Subtask> subtasks = parentEpic.getSubtasks();
                 subtasks.add(subtask);
