@@ -120,7 +120,6 @@ public class InMemoryTaskManager implements TaskManager {
         }
         Epic parentEpic = epicsMap.get(subtask.getParentEpicId());
         if ((parentEpic != null) && (subtasksMap.putIfAbsent(subtask.getId(), subtask) == null)) {
-            epicsMap.put(parentEpic.getId(), parentEpic);
             List<Subtask> subtasks = parentEpic.getSubtasks();
             subtasks.add(subtask);
             parentEpic.setSubtasks(subtasks);
