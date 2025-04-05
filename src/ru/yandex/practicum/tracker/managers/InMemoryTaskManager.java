@@ -199,6 +199,9 @@ public class InMemoryTaskManager implements TaskManager {
                 throw new IllegalArgumentException("Subtask cannot be its own Epic");
             }
             subtasksMap.put(subtask.getId(), subtask);
+            List<Subtask> subtasks = parentEpic.getSubtasks();
+            subtasks.add(subtask);
+            parentEpic.setSubtasks(subtasks);
         }
     }
 }
