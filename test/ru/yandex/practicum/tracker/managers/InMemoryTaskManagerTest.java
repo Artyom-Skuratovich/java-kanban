@@ -2,8 +2,6 @@ package ru.yandex.practicum.tracker.managers;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ru.yandex.practicum.tracker.managers.InMemoryTaskManager;
-import ru.yandex.practicum.tracker.managers.Managers;
 import ru.yandex.practicum.tracker.tasks.Epic;
 import ru.yandex.practicum.tracker.tasks.Subtask;
 import ru.yandex.practicum.tracker.tasks.Task;
@@ -115,5 +113,23 @@ class InMemoryTaskManagerTest {
         assertEquals(TaskStatus.NEW, fromTaskManager.getStatus());
         assertTrue(subtasks.containsAll(fromTaskManager.getSubtasks()));
         assertTrue(taskManager.getSubtask(subtask2.getId()).isEmpty());
+    }
+
+    @Test
+    public void shouldThrowAnExceptionWhenSubtaskIdEqualParentEpicId() {
+        Epic epic = new Epic(1, "", "");
+        Subtask subtask = new Subtask(1, "", "", TaskStatus.NEW, 1);
+        taskManager.createEpic(epic);
+
+        Throwable thrown = assertThrows(IllegalArgumentException.class, () -> taskManager.createSubtask(subtask));
+        assertEquals("Subtask cannot be its own Epic", thrown.getMessage());
+    }
+
+    @Test
+    public void shouldThrowAnExceptionWhenParentEpicDoesNotExists() {
+        Subtask subtask = new Subtask(1, "", "", TaskStatus.NEW, 1);
+
+        Throwable thrown = assertThrows(IllegalArgumentException.class, () -> taskManager.createSubtask(subtask));
+        assertEquals("Parent Epic doesn't exist", thrown.getMessage());
     }
 }

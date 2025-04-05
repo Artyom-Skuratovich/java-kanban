@@ -96,7 +96,7 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public void createOrdinaryTask(Task ordinaryTask) {
         if (ordinaryTask == null) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Task cannot be null");
         }
         ordinaryTasksMap.putIfAbsent(ordinaryTask.getId(), ordinaryTask);
     }
@@ -104,7 +104,7 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public void createEpic(Epic epic) {
         if (epic == null) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Epic cannot be null");
         }
         Epic previousEpic = epicsMap.putIfAbsent(epic.getId(), epic);
         if (previousEpic == null) {
@@ -116,10 +116,16 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public void createSubtask(Subtask subtask) {
         if (subtask == null) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Subtask cannot be null");
         }
         Epic parentEpic = epicsMap.get(subtask.getParentEpicId());
-        if ((parentEpic != null) && (subtasksMap.putIfAbsent(subtask.getId(), subtask) == null)) {
+        if (parentEpic == null) {
+            throw new IllegalArgumentException("Parent Epic doesn't exist");
+        }
+        if (subtask.getId() == parentEpic.getId()) {
+            throw new IllegalArgumentException("Subtask cannot be its own Epic");
+        }
+        if (subtasksMap.putIfAbsent(subtask.getId(), subtask) == null) {
             List<Subtask> subtasks = parentEpic.getSubtasks();
             subtasks.add(subtask);
             parentEpic.setSubtasks(subtasks);
@@ -155,7 +161,7 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public void updateOrdinaryTask(Task task) {
         if (task == null) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Task cannot be null");
         }
         if (ordinaryTasksMap.containsKey(task.getId())) {
             ordinaryTasksMap.put(task.getId(), task);
@@ -165,7 +171,7 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public void updateEpic(Epic epic) {
         if (epic == null) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Epic cannot be null");
         }
         if (epicsMap.containsKey(epic.getId())) {
             Epic oldEpic = epicsMap.put(epic.getId(), epic);
@@ -182,17 +188,17 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public void updateSubtask(Subtask subtask) {
         if (subtask == null) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Subtask cannot be null");
         }
         if (subtasksMap.containsKey(subtask.getId())) {
-            subtasksMap.put(subtask.getId(), subtask);
             Epic parentEpic = epicsMap.get(subtask.getParentEpicId());
-            if (parentEpic != null) {
-                List<Subtask> subtasks = parentEpic.getSubtasks();
-                subtasks.add(subtask);
-                parentEpic.setSubtasks(subtasks);
-                epicsMap.put(parentEpic.getId(), parentEpic);
+            if (parentEpic == null) {
+                throw new IllegalArgumentException("Parent Epic doesn't exist");
             }
+            if (subtask.getId() == parentEpic.getId()) {
+                throw new IllegalArgumentException("Subtask cannot be its own Epic");
+            }
+            subtasksMap.put(subtask.getId(), subtask);
         }
     }
 }
