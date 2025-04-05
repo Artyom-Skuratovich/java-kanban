@@ -1,7 +1,8 @@
-package ru.yandex.practicum.tracker.tasks.managers;
+package ru.yandex.practicum.tracker.managers;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import ru.yandex.practicum.tracker.managers.InMemoryHistoryManager;
 import ru.yandex.practicum.tracker.tasks.Epic;
 import ru.yandex.practicum.tracker.tasks.Subtask;
 import ru.yandex.practicum.tracker.tasks.Task;

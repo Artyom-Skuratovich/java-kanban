@@ -4,9 +4,9 @@ import ru.yandex.practicum.tracker.tasks.Epic;
 import ru.yandex.practicum.tracker.tasks.Subtask;
 import ru.yandex.practicum.tracker.tasks.Task;
 import ru.yandex.practicum.tracker.tasks.TaskStatus;
-import ru.yandex.practicum.tracker.tasks.managers.InMemoryTaskManager;
-import ru.yandex.practicum.tracker.tasks.managers.Managers;
-import ru.yandex.practicum.tracker.tasks.managers.TaskManager;
+import ru.yandex.practicum.tracker.managers.InMemoryTaskManager;
+import ru.yandex.practicum.tracker.managers.Managers;
+import ru.yandex.practicum.tracker.managers.TaskManager;
 
 import java.util.List;
 

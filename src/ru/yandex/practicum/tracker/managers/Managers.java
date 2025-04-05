@@ -1,4 +1,4 @@
-package ru.yandex.practicum.tracker.tasks.managers;
+package ru.yandex.practicum.tracker.managers;
 
 public class Managers {
     private Managers() {
