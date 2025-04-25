@@ -1,39 +1,43 @@
 package ru.yandex.practicum.tracker.managers;
 
-import ru.yandex.practicum.tracker.tasks.Epic;
-import ru.yandex.practicum.tracker.tasks.Task;
+import ru.yandex.practicum.tracker.models.Epic;
+import ru.yandex.practicum.tracker.models.Subtask;
+import ru.yandex.practicum.tracker.models.Task;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class InMemoryHistoryManager implements HistoryManager {
     private static final int MAX_HISTORY_SIZE = 10;
-    private final ArrayList<Task> history;
+    private final List<Task> tasks;
 
     public InMemoryHistoryManager() {
-        history = new ArrayList<>(MAX_HISTORY_SIZE);
+        tasks = new ArrayList<>(MAX_HISTORY_SIZE);
     }
 
     @Override
     public void add(Task task) {
-        if (task == null) return;
-        if (history.size() == MAX_HISTORY_SIZE) {
-            history.removeFirst();
+        if (task == null) {
+            throw new IllegalArgumentException("Task cannot be null");
         }
-        history.add(copyTask(task));
+
+        if (tasks.size() == MAX_HISTORY_SIZE) {
+            tasks.removeFirst();
+        }
+        tasks.addLast(copyTask(task));
     }
 
     @Override
     public List<Task> getHistory() {
-        return new ArrayList<>(history);
+        return tasks.stream().map(this::copyTask).toList();
     }
 
     private Task copyTask(Task task) {
-        if (task instanceof Epic) {
-            Epic epic = new Epic(task.getId(), task.getName(), task.getDescription());
-            epic.setSubtasks(((Epic) task).getSubtasks());
-            return epic;
+        if (task instanceof Subtask) {
+            return new Subtask((Subtask) task);
+        } else if (task instanceof Epic) {
+            return new Epic((Epic) task);
         }
-        return task;
+        return new Task(task);
     }
 }

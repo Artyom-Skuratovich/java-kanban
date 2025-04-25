@@ -2,12 +2,12 @@ package ru.yandex.practicum.tracker.managers;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ru.yandex.practicum.tracker.tasks.Epic;
-import ru.yandex.practicum.tracker.tasks.Subtask;
-import ru.yandex.practicum.tracker.tasks.Task;
-import ru.yandex.practicum.tracker.tasks.TaskStatus;
+import ru.yandex.practicum.tracker.models.Epic;
+import ru.yandex.practicum.tracker.models.Status;
+import ru.yandex.practicum.tracker.models.Subtask;
+import ru.yandex.practicum.tracker.models.Task;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -16,120 +16,108 @@ class InMemoryTaskManagerTest {
     private InMemoryTaskManager taskManager;
 
     @BeforeEach
-    public void createTaskManager() {
-        taskManager = (InMemoryTaskManager) Managers.getDefault();
-    }
-
-    @Test
-    public void shouldReturnTrueWhenTaskWasAddedAndGotById() {
-        Task task = new Task(InMemoryTaskManager.generateId(), "Task", "", TaskStatus.NEW);
-        taskManager.createOrdinaryTask(task);
-
-        assertEquals(taskManager.getOrdinaryTask(task.getId()), Optional.of(task), "Id задач не совпадают");
+    public void setUp() {
+        InMemoryHistoryManager historyManager = new InMemoryHistoryManager();
+        taskManager = new InMemoryTaskManager(historyManager);
     }
 
     @Test
     public void shouldReturnTaskListWithThreeItemsAfterCreationOfThreeTasks() {
-        Task firstTask = new Task(InMemoryTaskManager.generateId(), "First", "", TaskStatus.DONE);
-        Task secondTask = new Task(InMemoryTaskManager.generateId(), "Second", "", TaskStatus.DONE);
-        Task thirdTask = new Task(InMemoryTaskManager.generateId(), "Third", "", TaskStatus.DONE);
-        taskManager.createOrdinaryTask(firstTask);
-        taskManager.createOrdinaryTask(secondTask);
-        taskManager.createOrdinaryTask(thirdTask);
-        ArrayList<Task> tasks = new ArrayList<>();
-        tasks.add(firstTask);
-        tasks.add(secondTask);
-        tasks.add(thirdTask);
+        Task first = new Task("First", "First");
+        Task second = new Task("Second", "Second");
+        Task third = new Task("Third", "Third");
 
-        assertTrue(taskManager.getOrdinaryTasks().containsAll(tasks), "Списки задач не совпадают");
+        taskManager.createTask(first);
+        taskManager.createTask(second);
+        taskManager.createTask(third);
+
+        assertTrue(taskManager.getEpicList().isEmpty(), "Список эпиков не пустой");
+        assertTrue(taskManager.getSubtaskList().isEmpty(), "Список подзадач не пустой");
+        assertEquals(3, taskManager.getTaskList().size(), "Размер списка задач не равен трём");
+        assertTrue(taskManager.getTaskList().stream().anyMatch(task -> task.getName().equals(first.getName())),
+                "Не найдено название первой задачи");
+        assertTrue(taskManager.getTaskList().stream().anyMatch(task -> task.getName().equals(second.getName())),
+                "Не найдено название второй задачи");
+        assertTrue(taskManager.getTaskList().stream().anyMatch(task -> task.getName().equals(third.getName())),
+                "Не найдено название третьей задачи");
     }
 
     @Test
-    public void shouldReturnOldEpicAfterCreationNewEpicWithDifferentPropertiesButSameId() {
-        Epic oldEpic = new Epic(InMemoryTaskManager.generateId(), "Epic", "");
-        Subtask subtask1 = new Subtask(InMemoryTaskManager.generateId(), "1", "", TaskStatus.NEW, oldEpic.getId());
-        Subtask subtask2 = new Subtask(InMemoryTaskManager.generateId(), "2", "", TaskStatus.NEW, oldEpic.getId());
-
-        ArrayList<Subtask> subtasks = new ArrayList<>();
-        subtasks.add(subtask1);
-        subtasks.add(subtask2);
-        oldEpic.setSubtasks(subtasks);
-
-        taskManager.createEpic(oldEpic);
-        Epic newEpic = new Epic(oldEpic.getId(), "New Epic", "Rnd");
-        subtasks.removeFirst();
-        newEpic.setSubtasks(subtasks);
-        taskManager.createEpic(newEpic);
-
-        Optional<Epic> optionalEpic = taskManager.getEpic(oldEpic.getId());
-        assertTrue(optionalEpic.isPresent(), "Задача не должна быть пустой");
-        Epic fromTaskManager = optionalEpic.get();
-        assertEquals(oldEpic, fromTaskManager, "Id не зовпадают");
-        assertEquals(oldEpic.getName(), fromTaskManager.getName(), "Названия не совпадают");
-        assertEquals(oldEpic.getDescription(), fromTaskManager.getDescription(), "Описания не совпадают");
-        assertEquals(oldEpic.getStatus(), fromTaskManager.getStatus(), "Статусы не совпадают");
-        assertTrue(oldEpic.getSubtasks().containsAll(fromTaskManager.getSubtasks()), "Списки подзадач не совпадают");
-    }
-
-    @Test
-    public void shouldReturnEmptySubtaskAndEpicListsAfterRemoveAllSubtasks() {
-        Epic firstEpic = new Epic(InMemoryTaskManager.generateId(), "Epic", "");
-        Subtask subtask1 = new Subtask(InMemoryTaskManager.generateId(), "1", "", TaskStatus.NEW, firstEpic.getId());
-        Subtask subtask2 = new Subtask(InMemoryTaskManager.generateId(), "2", "", TaskStatus.NEW, firstEpic.getId());
-        taskManager.createEpic(firstEpic);
-        taskManager.createSubtask(subtask1);
-        taskManager.createSubtask(subtask2);
-
-        Epic secondEpic = new Epic(InMemoryTaskManager.generateId(), "Epic2", "");
-        subtask1 = new Subtask(InMemoryTaskManager.generateId(), "3", "", TaskStatus.DONE, secondEpic.getId());
-        taskManager.createEpic(secondEpic);
-        taskManager.createSubtask(subtask1);
-
-        taskManager.removeAllEpics();
-
-        assertTrue(taskManager.getEpics().isEmpty());
-    }
-
-    @Test
-    public void updateEpic() {
-        Epic epic = new Epic(InMemoryTaskManager.generateId(), "Epic", "");
-        Subtask subtask1 = new Subtask(InMemoryTaskManager.generateId(), "1", "", TaskStatus.NEW, epic.getId());
-        Subtask subtask2 = new Subtask(InMemoryTaskManager.generateId(), "2", "", TaskStatus.NEW, epic.getId());
+    public void shouldReturnThreeSubtasksForEpicAfterCreationTheseOnes() {
+        Epic epic = new Epic("Epic", "Epic");
         taskManager.createEpic(epic);
-        taskManager.createSubtask(subtask1);
-        taskManager.createSubtask(subtask2);
+        epic = taskManager.getEpicList().getFirst();
 
-        epic = new Epic(epic.getId(), "Updated", "New desc");
+        Subtask first = new Subtask("First", "First", epic.getId());
+        Subtask second = new Subtask("Second", "Second", epic.getId());
+        Subtask third = new Subtask("Third", "Third", epic.getId());
+
+        taskManager.createSubtask(first);
+        taskManager.createSubtask(second);
+        taskManager.createSubtask(third);
+
+        assertEquals(3, taskManager.getSubtaskListForEpic(epic.getId()).size(),
+                "Размер списка подзадач для эпика не равен трём");
+        assertTrue(taskManager.getSubtaskListForEpic(epic.getId()).stream()
+                        .anyMatch(s -> s.getName().equals(first.getName())),
+                "Не найдено название первой подзадачи");
+        assertTrue(taskManager.getSubtaskListForEpic(epic.getId()).stream()
+                        .anyMatch(s -> s.getName().equals(second.getName())),
+                "Не найдено название второй подзадачи");
+        assertTrue(taskManager.getSubtaskListForEpic(epic.getId()).stream()
+                        .anyMatch(s -> s.getName().equals(third.getName())),
+                "Не найдено название третьей подзадачи");
+
+        Optional<Epic> optionalEpic = taskManager.getEpicById(epic.getId());
+        optionalEpic.ifPresent(e -> assertEquals(3, e.getSubtaskIds().size(),
+                "Размер списка подзадач для эпика не равен трём"));
+    }
+
+    @Test
+    public void shouldReturnOneSubtaskForEpicWhenEpicHasListWithThreeSubtaskIdsButAddedOnlyOne() {
+        Epic epic = new Epic("Epic", "Epic");
+        taskManager.createEpic(epic);
+        epic = taskManager.getEpicList().getFirst();
+
+        Subtask subtask = new Subtask("Subtask", "Subtask", epic.getId());
+        taskManager.createSubtask(subtask);
+        subtask = taskManager.getSubtaskListForEpic(epic.getId()).getFirst();
+
+        epic.addSubtaskId(subtask.getId());
+        epic.addSubtaskId(12899);
+        epic.addSubtaskId(9876500);
         taskManager.updateEpic(epic);
-        taskManager.createSubtask(subtask1);
+        epic = taskManager.getEpicList().getFirst();
 
-        ArrayList<Subtask> subtasks = new ArrayList<>();
-        subtasks.add(subtask1);
-        Optional<Epic> optionalEpic = taskManager.getEpic(epic.getId());
-        assertTrue(optionalEpic.isPresent());
-        Epic fromTaskManager = optionalEpic.get();
-        assertEquals(epic.getName(), fromTaskManager.getName());
-        assertEquals(epic.getDescription(), fromTaskManager.getDescription());
-        assertEquals(TaskStatus.NEW, fromTaskManager.getStatus());
-        assertTrue(subtasks.containsAll(fromTaskManager.getSubtasks()));
-        assertTrue(taskManager.getSubtask(subtask2.getId()).isEmpty());
+        assertEquals(3, epic.getSubtaskIds().size(),
+                "Размер списка идентификатор подзадач не равен 3");
+        assertTrue(epic.getSubtaskIds().contains(subtask.getId()),
+                "Список идентификаторов подзадач не содержит id подзадачи");
+        assertEquals(1, taskManager.getSubtaskListForEpic(epic.getId()).size(),
+                "Размер списка подзадач из TaskManager не равен 1");
+        assertTrue(taskManager.getSubtaskListForEpic(epic.getId()).contains(subtask),
+                "Список подзадач эпика не содержит нужной подзадачи");
     }
 
     @Test
-    public void shouldThrowAnExceptionWhenSubtaskIdEqualParentEpicId() {
-        Epic epic = new Epic(1, "", "");
-        Subtask subtask = new Subtask(1, "", "", TaskStatus.NEW, 1);
+    public void shouldSetDoneStatusForEpicWhenAllSubtasksAreDone() {
+        Epic epic = new Epic("Epic", "Epic");
         taskManager.createEpic(epic);
+        epic = taskManager.getEpicList().getFirst();
 
-        Throwable thrown = assertThrows(IllegalArgumentException.class, () -> taskManager.createSubtask(subtask));
-        assertEquals("Subtask cannot be its own Epic", thrown.getMessage());
-    }
+        Subtask first = new Subtask("First", "First", epic.getId());
+        Subtask second = new Subtask("Second", "Second", epic.getId());
+        Subtask third = new Subtask("Third", "Third", epic.getId());
 
-    @Test
-    public void shouldThrowAnExceptionWhenParentEpicDoesNotExists() {
-        Subtask subtask = new Subtask(1, "", "", TaskStatus.NEW, 1);
+        taskManager.createSubtask(first);
+        taskManager.createSubtask(second);
+        taskManager.createSubtask(third);
 
-        Throwable thrown = assertThrows(IllegalArgumentException.class, () -> taskManager.createSubtask(subtask));
-        assertEquals("Parent Epic doesn't exist", thrown.getMessage());
+        List<Subtask> subtaskList = taskManager.getSubtaskListForEpic(epic.getId());
+        subtaskList.forEach(s -> s.setStatus(Status.DONE));
+        subtaskList.forEach(taskManager::updateSubtask);
+
+        assertEquals(Status.DONE, taskManager.getEpicList().getFirst().getStatus(),
+                "Статус эпика не DONE");
     }
 }

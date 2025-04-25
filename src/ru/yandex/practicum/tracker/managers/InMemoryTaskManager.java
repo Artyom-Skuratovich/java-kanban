@@ -1,45 +1,53 @@
 package ru.yandex.practicum.tracker.managers;
 
-import ru.yandex.practicum.tracker.tasks.Epic;
-import ru.yandex.practicum.tracker.tasks.Subtask;
-import ru.yandex.practicum.tracker.tasks.Task;
+import ru.yandex.practicum.tracker.models.Epic;
+import ru.yandex.practicum.tracker.models.Subtask;
+import ru.yandex.practicum.tracker.models.Task;
+import ru.yandex.practicum.tracker.models.Status;
 
 import java.util.*;
 
 public class InMemoryTaskManager implements TaskManager {
-    private final HashMap<Integer, Task> ordinaryTasksMap;
-    private final HashMap<Integer, Subtask> subtasksMap;
-    private final HashMap<Integer, Epic> epicsMap;
+    private static long nextId = 1;
+
+    private final Map<Long, Task> taskMap;
+    private final Map<Long, Subtask> subtaskMap;
+    private final Map<Long, Epic> epicMap;
+
     private final HistoryManager historyManager;
-    private static int nextId = 1;
 
     public InMemoryTaskManager(HistoryManager historyManager) {
         if (historyManager == null) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("History manager cannot be null");
         }
+
         this.historyManager = historyManager;
-        ordinaryTasksMap = new HashMap<>();
-        subtasksMap = new HashMap<>();
-        epicsMap = new HashMap<>();
-    }
-
-    public static synchronized int generateId() {
-        return nextId++;
+        taskMap = new HashMap<>();
+        subtaskMap = new HashMap<>();
+        epicMap = new HashMap<>();
     }
 
     @Override
-    public List<Epic> getEpics() {
-        return new ArrayList<>(epicsMap.values());
+    public List<Task> getTaskList() {
+        return taskMap.values().stream().map(Task::new).toList();
     }
 
     @Override
-    public List<Subtask> getSubtasks() {
-        return new ArrayList<>(subtasksMap.values());
+    public List<Subtask> getSubtaskList() {
+        return subtaskMap.values().stream().map(Subtask::new).toList();
     }
 
     @Override
-    public List<Task> getOrdinaryTasks() {
-        return new ArrayList<>(ordinaryTasksMap.values());
+    public List<Subtask> getSubtaskListForEpic(long epicId) {
+        if (!epicMap.containsKey(epicId)) return Collections.emptyList();
+        return subtaskMap.values().stream()
+                .filter(s -> s.getParentEpicId() == epicId)
+                .map(Subtask::new).toList();
+    }
+
+    @Override
+    public List<Epic> getEpicList() {
+        return epicMap.values().stream().map(Epic::new).toList();
     }
 
     @Override
@@ -48,69 +56,47 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public List<Subtask> getSubtasksForEpic(int epicId) {
-        Epic epic = epicsMap.get(epicId);
-        if (epic != null) {
-            return epic.getSubtasks();
+    public Optional<Task> getTaskById(long id) {
+        Task task = taskMap.get(id);
+        if (task != null) {
+            Task copy = new Task(task);
+            historyManager.add(copy);
+            return Optional.of(copy);
         }
-        return Collections.emptyList();
+        return Optional.empty();
     }
 
     @Override
-    public void removeAllEpics() {
-        epicsMap.clear();
+    public Optional<Subtask> getSubtaskById(long id) {
+        Subtask subtask = subtaskMap.get(id);
+        if (subtask != null) {
+            Subtask copy = new Subtask(subtask);
+            historyManager.add(copy);
+            return Optional.of(copy);
+        }
+        return Optional.empty();
     }
 
     @Override
-    public void removeAllTasks() {
-        ordinaryTasksMap.clear();
+    public Optional<Epic> getEpicById(long id) {
+        Epic epic = epicMap.get(id);
+        if (epic != null) {
+            Epic copy = new Epic(epic);
+            historyManager.add(copy);
+            return Optional.of(copy);
+        }
+        return Optional.empty();
     }
 
     @Override
-    public void removeAllSubtasks() {
-        subtasksMap.clear();
-        epicsMap.forEach((i, e) -> e.setSubtasks(Collections.emptyList()));
-    }
-
-    @Override
-    public Optional<Task> getOrdinaryTask(int id) {
-        Optional<Task> ordinaryTask = Optional.ofNullable(ordinaryTasksMap.get(id));
-        ordinaryTask.ifPresent(historyManager::add);
-        return ordinaryTask;
-    }
-
-    @Override
-    public Optional<Epic> getEpic(int id) {
-        Optional<Epic> epic = Optional.ofNullable(epicsMap.get(id));
-        epic.ifPresent(historyManager::add);
-        return epic;
-    }
-
-    @Override
-    public Optional<Subtask> getSubtask(int id) {
-        Optional<Subtask> subtask = Optional.ofNullable(subtasksMap.get(id));
-        subtask.ifPresent(historyManager::add);
-        return subtask;
-    }
-
-    @Override
-    public void createOrdinaryTask(Task ordinaryTask) {
-        if (ordinaryTask == null) {
+    public void createTask(Task task) {
+        if (task == null) {
             throw new IllegalArgumentException("Task cannot be null");
         }
-        ordinaryTasksMap.putIfAbsent(ordinaryTask.getId(), ordinaryTask);
-    }
 
-    @Override
-    public void createEpic(Epic epic) {
-        if (epic == null) {
-            throw new IllegalArgumentException("Epic cannot be null");
-        }
-        Epic previousEpic = epicsMap.putIfAbsent(epic.getId(), epic);
-        if (previousEpic == null) {
-            List<Subtask> subtasks = epic.getSubtasks();
-            subtasks.forEach(s -> subtasksMap.put(s.getId(), s));
-        }
+        Task copy = new Task(task);
+        copy.setId(getNextId());
+        taskMap.put(copy.getId(), copy);
     }
 
     @Override
@@ -118,70 +104,38 @@ public class InMemoryTaskManager implements TaskManager {
         if (subtask == null) {
             throw new IllegalArgumentException("Subtask cannot be null");
         }
-        Epic parentEpic = epicsMap.get(subtask.getParentEpicId());
+        Epic parentEpic = epicMap.get(subtask.getParentEpicId());
         if (parentEpic == null) {
-            throw new IllegalArgumentException("Parent Epic doesn't exist");
+            throw new IllegalArgumentException("Parent epic doesn't exist");
         }
-        if (subtask.getId() == parentEpic.getId()) {
-            throw new IllegalArgumentException("Subtask cannot be its own Epic");
-        }
-        if (subtasksMap.putIfAbsent(subtask.getId(), subtask) == null) {
-            List<Subtask> subtasks = parentEpic.getSubtasks();
-            subtasks.add(subtask);
-            parentEpic.setSubtasks(subtasks);
-        }
+
+        Subtask copy = new Subtask(subtask);
+        copy.setId(getNextId());
+        subtaskMap.put(copy.getId(), copy);
+        parentEpic.addSubtaskId(copy.getId());
+        changeEpicStatus(parentEpic);
     }
 
     @Override
-    public void removeOrdinaryTask(int id) {
-        ordinaryTasksMap.remove(id);
-    }
-
-    @Override
-    public void removeEpic(int id) {
-        Epic removedEpic = epicsMap.remove(id);
-        if (removedEpic != null) {
-            removedEpic.getSubtasks().forEach(s -> subtasksMap.remove(s.getId()));
-        }
-    }
-
-    @Override
-    public void removeSubtask(int id) {
-        Subtask removedSubtask = subtasksMap.remove(id);
-        if (removedSubtask != null) {
-            Epic parentEpic = epicsMap.get(removedSubtask.getParentEpicId());
-            if (parentEpic != null) {
-                List<Subtask> subtasks = parentEpic.getSubtasks();
-                subtasks.remove(removedSubtask);
-                parentEpic.setSubtasks(subtasks);
-            }
-        }
-    }
-
-    @Override
-    public void updateOrdinaryTask(Task task) {
-        if (task == null) {
-            throw new IllegalArgumentException("Task cannot be null");
-        }
-        if (ordinaryTasksMap.containsKey(task.getId())) {
-            ordinaryTasksMap.put(task.getId(), task);
-        }
-    }
-
-    @Override
-    public void updateEpic(Epic epic) {
+    public void createEpic(Epic epic) {
         if (epic == null) {
             throw new IllegalArgumentException("Epic cannot be null");
         }
-        if (epicsMap.containsKey(epic.getId())) {
-            Epic oldEpic = epicsMap.put(epic.getId(), epic);
-            List<Subtask> newSubtasks = epic.getSubtasks();
-            if (oldEpic != null) {
-                List<Subtask> oldSubtasks = oldEpic.getSubtasks();
-                List<Subtask> forRemove = oldSubtasks.stream().filter(s -> !newSubtasks.contains(s)).toList();
-                forRemove.forEach(s -> subtasksMap.remove(s.getId()));
-            }
-            newSubtasks.forEach(s -> subtasksMap.put(s.getId(), s));
+        Epic copy = new Epic(epic);
+        copy.setId(getNextId());
+        epicMap.put(copy.getId(), copy);
+        changeEpicStatus(copy);
+    }
+
+    @Override
+    public void updateTask(Task task) {
+        if (task == null) {
+            throw new IllegalArgumentException("Task cannot be null");
+        }
+
+        if (taskMap.containsKey(task.getId())) {
+            Task copy = new Task(task);
+            taskMap.put(copy.getId(), copy);
         }
     }
 
@@ -190,18 +144,106 @@ public class InMemoryTaskManager implements TaskManager {
         if (subtask == null) {
             throw new IllegalArgumentException("Subtask cannot be null");
         }
-        if (subtasksMap.containsKey(subtask.getId())) {
-            Epic parentEpic = epicsMap.get(subtask.getParentEpicId());
-            if (parentEpic == null) {
-                throw new IllegalArgumentException("Parent Epic doesn't exist");
+        Epic parentEpic = epicMap.get(subtask.getParentEpicId());
+        if (parentEpic == null) {
+            throw new IllegalArgumentException("Parent epic doesn't exist");
+        }
+        if (parentEpic.getId() == subtask.getId()) {
+            throw new IllegalArgumentException("Subtask cannot be its own epic");
+        }
+
+        Subtask innerSubtask = subtaskMap.get(subtask.getId());
+        if (innerSubtask != null) {
+            if (innerSubtask.getParentEpicId() != subtask.getParentEpicId()) {
+                Epic oldParentEpic = epicMap.get(innerSubtask.getParentEpicId());
+                if (oldParentEpic != null) {
+                    oldParentEpic.removeSubtaskId(innerSubtask.getId());
+                }
             }
-            if (subtask.getId() == parentEpic.getId()) {
-                throw new IllegalArgumentException("Subtask cannot be its own Epic");
+
+            Subtask copy = new Subtask(subtask);
+            subtaskMap.put(copy.getId(), copy);
+            parentEpic.addSubtaskId(copy.getId());
+            changeEpicStatus(parentEpic);
+        }
+    }
+
+    @Override
+    public void updateEpic(Epic epic) {
+        if (epic == null) {
+            throw new IllegalArgumentException("Epic cannot be null");
+        }
+
+        if (epicMap.containsKey(epic.getId())) {
+            Epic copy = new Epic(epic);
+            epicMap.put(copy.getId(), copy);
+            changeEpicStatus(copy);
+        }
+    }
+
+    @Override
+    public void removeTask(long id) {
+        taskMap.remove(id);
+    }
+
+    @Override
+    public void removeSubtask(long id) {
+        Subtask removedSubtask = subtaskMap.remove(id);
+        if (removedSubtask != null) {
+            Epic parentEpic = epicMap.get(removedSubtask.getParentEpicId());
+            if (parentEpic != null) {
+                parentEpic.removeSubtaskId(id);
+                changeEpicStatus(parentEpic);
             }
-            subtasksMap.put(subtask.getId(), subtask);
-            List<Subtask> subtasks = parentEpic.getSubtasks();
-            subtasks.add(subtask);
-            parentEpic.setSubtasks(subtasks);
+        }
+    }
+
+    @Override
+    public void removeEpic(long id) {
+        Epic removedEpic = epicMap.remove(id);
+        if (removedEpic != null) {
+            removedEpic.getSubtaskIds().forEach(subtaskMap::remove);
+        }
+    }
+
+    @Override
+    public void removeAllTasks() {
+        taskMap.clear();
+    }
+
+    @Override
+    public void removeAllSubtasks() {
+        subtaskMap.clear();
+        Collection<Epic> epics = epicMap.values();
+        for (Epic epic : epics) {
+            epic.removeAllSubtaskIds();
+            epic.setStatus(Status.NEW);
+        }
+    }
+
+    @Override
+    public void removeAllEpics() {
+        epicMap.clear();
+        subtaskMap.clear();
+    }
+
+    private static synchronized long getNextId() {
+        return nextId++;
+    }
+
+    private static boolean checkSubtasksStatus(List<Subtask> subtaskList, Status status) {
+        return subtaskList.stream().allMatch(s -> s.getStatus().equals(status));
+    }
+
+    private void changeEpicStatus(Epic epic) {
+        List<Subtask> subtaskList = subtaskMap.values().stream()
+                .filter(s -> s.getParentEpicId() == epic.getId()).toList();
+        if (subtaskList.isEmpty() || checkSubtasksStatus(subtaskList, Status.NEW)) {
+            epic.setStatus(Status.NEW);
+        } else if (checkSubtasksStatus(subtaskList, Status.DONE)) {
+            epic.setStatus(Status.DONE);
+        } else {
+            epic.setStatus(Status.IN_PROGRESS);
         }
     }
 }

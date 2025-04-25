@@ -1,6 +1,6 @@
 package ru.yandex.practicum.tracker.managers;
 
-import ru.yandex.practicum.tracker.tasks.Task;
+import ru.yandex.practicum.tracker.models.Task;
 
 import java.util.List;
 

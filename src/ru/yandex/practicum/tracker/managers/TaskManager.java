@@ -1,50 +1,50 @@
 package ru.yandex.practicum.tracker.managers;
 
-import ru.yandex.practicum.tracker.tasks.Epic;
-import ru.yandex.practicum.tracker.tasks.Subtask;
-import ru.yandex.practicum.tracker.tasks.Task;
+import ru.yandex.practicum.tracker.models.Epic;
+import ru.yandex.practicum.tracker.models.Subtask;
+import ru.yandex.practicum.tracker.models.Task;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface TaskManager {
-    List<Epic> getEpics();
+    List<Task> getTaskList();
 
-    List<Subtask> getSubtasks();
+    List<Subtask> getSubtaskList();
 
-    List<Task> getOrdinaryTasks();
+    List<Subtask> getSubtaskListForEpic(long epicId);
+
+    List<Epic> getEpicList();
 
     List<Task> getHistory();
 
-    List<Subtask> getSubtasksForEpic(int epicId);
+    Optional<Task> getTaskById(long id);
 
-    void removeAllEpics();
+    Optional<Subtask> getSubtaskById(long id);
+
+    Optional<Epic> getEpicById(long id);
+
+    void createTask(Task task);
+
+    void createSubtask(Subtask subtask);
+
+    void createEpic(Epic epic);
+
+    void updateTask(Task task);
+
+    void updateSubtask(Subtask subtask);
+
+    void updateEpic(Epic epic);
+
+    void removeTask(long id);
+
+    void removeSubtask(long id);
+
+    void removeEpic(long id);
 
     void removeAllTasks();
 
     void removeAllSubtasks();
 
-    Optional<Task> getOrdinaryTask(int id);
-
-    Optional<Epic> getEpic(int id);
-
-    Optional<Subtask> getSubtask(int id);
-
-    void createOrdinaryTask(Task ordinaryTask);
-
-    void createEpic(Epic epic);
-
-    void createSubtask(Subtask subtask);
-
-    void removeOrdinaryTask(int id);
-
-    void removeEpic(int id);
-
-    void removeSubtask(int id);
-
-    void updateOrdinaryTask(Task task);
-
-    void updateEpic(Epic epic);
-
-    void updateSubtask(Subtask subtask);
+    void removeAllEpics();
 }
