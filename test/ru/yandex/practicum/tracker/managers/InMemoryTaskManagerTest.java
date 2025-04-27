@@ -120,4 +120,21 @@ class InMemoryTaskManagerTest {
         assertEquals(Status.DONE, taskManager.getEpicList().getFirst().getStatus(),
                 "Статус эпика не DONE");
     }
+
+    @Test
+    public void shouldReturnFalseWhenTryToCompareReferencesBetweenManualCreatedTaskAndTaskFromManager() {
+        Task task = new Task("Task", "Task");
+        taskManager.createTask(task);
+        Task fromManager = taskManager.getTaskList().getFirst();
+
+        assertNotSame(task, fromManager);
+    }
+
+    @Test
+    public void shouldThrowIllegalArgumentExceptionWhenTryToCreateSubtaskByUsingCreateTaskMethod() {
+        Subtask subtask = new Subtask("Subtask", "Subtask", 1);
+
+        Throwable thrown = assertThrows(IllegalArgumentException.class, () -> taskManager.createTask(subtask));
+        assertEquals("Task must be only Task type", thrown.getMessage());
+    }
 }
