@@ -5,14 +5,29 @@ import ru.yandex.practicum.tracker.models.Subtask;
 import ru.yandex.practicum.tracker.models.Task;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class InMemoryHistoryManager implements HistoryManager {
-    private static final int MAX_HISTORY_SIZE = 10;
-    private final List<Task> tasks;
+    private static class Node {
+        final Task data;
+        Node next;
+        Node prev;
+
+        Node(Task data, Node next, Node prev) {
+            this.data = data;
+            this.next = next;
+            this.prev = prev;
+        }
+    }
+
+    private Node head;
+    private Node tail;
+    private final Map<Long, Node> nodeMap;
 
     public InMemoryHistoryManager() {
-        tasks = new ArrayList<>(MAX_HISTORY_SIZE);
+        nodeMap = new HashMap<>();
     }
 
     @Override
@@ -21,15 +36,20 @@ public class InMemoryHistoryManager implements HistoryManager {
             throw new IllegalArgumentException("Task cannot be null");
         }
 
-        if (tasks.size() == MAX_HISTORY_SIZE) {
-            tasks.removeFirst();
+        linkLast(task);
+    }
+
+    @Override
+    public void remove(long id) {
+        Node node = nodeMap.remove(id);
+        if (node != null) {
+            removeNode(node);
         }
-        tasks.addLast(copyTask(task));
     }
 
     @Override
     public List<Task> getHistory() {
-        return tasks.stream().map(this::copyTask).toList();
+        return getTasks();
     }
 
     private Task copyTask(Task task) {
@@ -39,5 +59,39 @@ public class InMemoryHistoryManager implements HistoryManager {
             return new Epic((Epic) task);
         }
         return new Task(task);
+    }
+
+    private List<Task> getTasks() {
+        List<Task> taskList = new ArrayList<>(nodeMap.size());
+        Node current = head;
+
+        while (current != null) {
+            taskList.add(copyTask(current.data));
+            current = current.next;
+        }
+        return taskList;
+    }
+
+    private void linkLast(Task task) {
+        Node node = new Node(copyTask(task), null, tail);
+        if (head == null) {
+            head = node;
+        } else {
+            tail.next = node;
+        }
+        tail = node;
+
+        remove(task.getId());
+        nodeMap.put(task.getId(), node);
+    }
+
+    private void removeNode(Node node) {
+        if (node.prev != null) {
+            node.prev.next = node.next;
+        }
+        if (node.next != null) {
+            node.next.prev = node.prev;
+        }
+        node.next = node.prev = null;
     }
 }
