@@ -127,6 +127,7 @@ public class InMemoryTaskManager implements TaskManager {
         Epic copy = new Epic(epic);
         copy.setId(getNextId());
         epicMap.put(copy.getId(), copy);
+        removeAllUnusedSubtaskIds(copy);
         changeEpicStatus(copy);
     }
 
@@ -183,6 +184,7 @@ public class InMemoryTaskManager implements TaskManager {
         if (epicMap.containsKey(epic.getId())) {
             Epic copy = new Epic(epic);
             epicMap.put(copy.getId(), copy);
+            removeAllUnusedSubtaskIds(copy);
             changeEpicStatus(copy);
         }
     }
@@ -251,5 +253,13 @@ public class InMemoryTaskManager implements TaskManager {
         } else {
             epic.setStatus(Status.IN_PROGRESS);
         }
+    }
+
+    private void removeAllUnusedSubtaskIds(Epic epic) {
+        epic.getSubtaskIds().forEach(id -> {
+            if (!subtaskMap.containsKey(id)) {
+                epic.removeSubtaskId(id);
+            }
+        });
     }
 }

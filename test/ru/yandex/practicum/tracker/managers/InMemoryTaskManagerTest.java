@@ -89,7 +89,7 @@ class InMemoryTaskManagerTest {
         taskManager.updateEpic(epic);
         epic = taskManager.getEpicList().getFirst();
 
-        assertEquals(3, epic.getSubtaskIds().size(),
+        assertEquals(1, epic.getSubtaskIds().size(),
                 "Размер списка идентификатор подзадач не равен 3");
         assertTrue(epic.getSubtaskIds().contains(subtask.getId()),
                 "Список идентификаторов подзадач не содержит id подзадачи");
