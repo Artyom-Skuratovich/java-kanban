@@ -93,6 +93,9 @@ public class InMemoryTaskManager implements TaskManager {
         if (task == null) {
             throw new IllegalArgumentException("Task cannot be null");
         }
+        if ((task instanceof Subtask) || (task instanceof Epic)) {
+            throw new IllegalArgumentException("Task must be only Task type");
+        }
 
         Task copy = new Task(task);
         copy.setId(getNextId());
@@ -131,6 +134,9 @@ public class InMemoryTaskManager implements TaskManager {
     public void updateTask(Task task) {
         if (task == null) {
             throw new IllegalArgumentException("Task cannot be null");
+        }
+        if ((task instanceof Subtask) || (task instanceof Epic)) {
+            throw new IllegalArgumentException("Task must be only Task type");
         }
 
         if (taskMap.containsKey(task.getId())) {
