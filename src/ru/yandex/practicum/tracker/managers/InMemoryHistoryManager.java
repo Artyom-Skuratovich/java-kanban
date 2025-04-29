@@ -73,6 +73,8 @@ public class InMemoryHistoryManager implements HistoryManager {
     }
 
     private void linkLast(Task task) {
+        remove(task.getId());
+
         Node node = new Node(copyTask(task), null, tail);
         if (head == null) {
             head = node;
@@ -81,7 +83,6 @@ public class InMemoryHistoryManager implements HistoryManager {
         }
         tail = node;
 
-        remove(task.getId());
         nodeMap.put(task.getId(), node);
     }
 
