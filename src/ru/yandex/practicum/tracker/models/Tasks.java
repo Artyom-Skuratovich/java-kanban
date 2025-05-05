@@ -35,7 +35,7 @@ public final class Tasks {
             throw new IllegalArgumentException("Value cannot be null");
         }
         String[] words = value.split(WORD_SEPARATOR);
-        if (words.length != 7) {
+        if ((words.length < 5) || (words.length > 6)) {
             throw new TaskFormatException("String value has bad format and cannot be converted to Task");
         }
 
