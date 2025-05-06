@@ -14,17 +14,17 @@ public final class Tasks {
         }
 
         String id = Long.toString(task.getId());
-        String status = task.getStatus().toString();
+        String status = task.getStatus().name();
         String epic = "";
         String type;
 
         if (task instanceof Epic) {
-            type = TaskType.EPIC.toString();
+            type = TaskType.EPIC.name();
         } else if (task instanceof Subtask) {
-            type = TaskType.SUBTASK.toString();
+            type = TaskType.SUBTASK.name();
             epic = Long.toString(((Subtask) task).getParentEpicId());
         } else {
-            type = TaskType.TASK.toString();
+            type = TaskType.TASK.name();
         }
 
         return String.join(WORD_SEPARATOR, id, type, task.getName(), status, task.getDescription(), epic);
@@ -40,9 +40,9 @@ public final class Tasks {
         }
 
         Task resultTask;
-        if (words[1].equals(TaskType.EPIC.toString())) {
+        if (words[1].equals(TaskType.EPIC.name())) {
             resultTask = new Epic(words[2], words[4]);
-        } else if (words[1].equals(TaskType.SUBTASK.toString())) {
+        } else if (words[1].equals(TaskType.SUBTASK.name())) {
             resultTask = new Subtask(words[2], words[4], Long.parseLong(words[5]));
         } else {
             resultTask = new Task(words[2], words[4]);
