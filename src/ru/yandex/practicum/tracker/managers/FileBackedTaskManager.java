@@ -7,12 +7,9 @@ import ru.yandex.practicum.tracker.models.Subtask;
 import ru.yandex.practicum.tracker.models.Task;
 import ru.yandex.practicum.tracker.models.Tasks;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.*;
 
 public class FileBackedTaskManager extends InMemoryTaskManager {
@@ -93,13 +90,14 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
             throw new IllegalArgumentException("File object cannot be directory");
         }
 
-        try {
+        try (BufferedReader reader = new BufferedReader(new FileReader(file, CHARSET))) {
             FileBackedTaskManager taskManager = new FileBackedTaskManager(historyManager, file.getPath());
-            List<String> fileContent = Files.readAllLines(file.toPath(), CHARSET);
             Map<Long, Subtask> unusedSubtasks = new HashMap<>();
 
-            for (int i = 1; i < fileContent.size(); i++) {
-                Task task = Tasks.fromString(fileContent.get(i));
+            // Skip first line with title.
+            if (reader.ready()) reader.readLine();
+            while (reader.ready()) {
+                Task task = Tasks.fromString(reader.readLine());
 
                 if (task instanceof Epic epic) {
                     taskManager.epicMap.put(epic.getId(), epic);
