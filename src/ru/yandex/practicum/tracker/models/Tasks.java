@@ -4,6 +4,7 @@ import ru.yandex.practicum.tracker.exceptions.TaskFormatException;
 
 public final class Tasks {
     public static final String WORD_SEPARATOR = ",";
+    public static final int WORDS_COUNT = 6;
 
     private Tasks() {
     }
@@ -34,8 +35,8 @@ public final class Tasks {
         if (value == null) {
             throw new IllegalArgumentException("Value cannot be null");
         }
-        String[] words = value.split(WORD_SEPARATOR);
-        if ((words.length < 5) || (words.length > 6)) {
+        String[] words = value.split(WORD_SEPARATOR, WORDS_COUNT);
+        if (words.length != WORDS_COUNT) {
             throw new TaskFormatException("String value has bad format and cannot be converted to Task");
         }
 
