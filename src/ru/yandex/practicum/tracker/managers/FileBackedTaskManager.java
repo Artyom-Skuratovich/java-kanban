@@ -205,9 +205,9 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         try (FileWriter fileWriter = new FileWriter(path, CHARSET)) {
             StringBuilder fileContent = new StringBuilder();
 
-            getTaskList().forEach(t -> appendContentToStringBuilder(fileContent, t));
-            getEpicList().forEach(e -> appendContentToStringBuilder(fileContent, e));
-            getSubtaskList().forEach(s -> appendContentToStringBuilder(fileContent, s));
+            taskMap.forEach((id, t) -> appendContentToStringBuilder(fileContent, t));
+            epicMap.forEach((id, e) -> appendContentToStringBuilder(fileContent, e));
+            subtaskMap.forEach((id, s) -> appendContentToStringBuilder(fileContent, s));
 
             if (!fileContent.isEmpty()) {
                 fileContent.insert(0, TITLE + System.lineSeparator());
