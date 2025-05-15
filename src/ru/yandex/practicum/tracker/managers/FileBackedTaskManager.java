@@ -5,27 +5,25 @@ import ru.yandex.practicum.tracker.exceptions.ManagerSaveException;
 import ru.yandex.practicum.tracker.models.Epic;
 import ru.yandex.practicum.tracker.models.Subtask;
 import ru.yandex.practicum.tracker.models.Task;
-import ru.yandex.practicum.tracker.models.Tasks;
+import ru.yandex.practicum.tracker.models.TaskSerializer;
 
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class FileBackedTaskManager extends InMemoryTaskManager {
     private static final Charset CHARSET = StandardCharsets.UTF_8;
-    private static final String TITLE = String.join(Tasks.WORD_SEPARATOR,
-            "id", "type", "name", "status", "description", "epic");
+    private static final TaskSerializer SERIALIZER = new TaskSerializer(",",
+            DateTimeFormatter.ISO_LOCAL_DATE_TIME);
 
     private final String path;
 
     public FileBackedTaskManager(HistoryManager historyManager, String path) {
         super(historyManager);
-
-        if (path == null) {
-            throw new IllegalArgumentException("Path cannot be null");
-        }
-
         this.path = path;
     }
 
@@ -34,10 +32,10 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
             File file = File.createTempFile("tasks-", ".csv");
             FileBackedTaskManager firstManager = new FileBackedTaskManager(Managers.getDefaultHistory(), file.getPath());
 
-            Task firstTask = new Task("First task", "");
-            Task secondTask = new Task("Second task", "");
-            Epic firstEpic = new Epic("First epic", "");
-            Epic secondEpic = new Epic("Second epic", "");
+            Task firstTask = new Task("First task", "", LocalDateTime.now(), Duration.ofMinutes(60));
+            Task secondTask = new Task("Second task", "", LocalDateTime.now(), Duration.ofMinutes(70));
+            Epic firstEpic = new Epic("First epic", "", LocalDateTime.now(), Duration.ofMinutes(50));
+            Epic secondEpic = new Epic("Second epic", "", LocalDateTime.now(), Duration.ofMinutes(123));
 
             firstManager.createTask(firstTask);
             firstManager.createTask(secondTask);
@@ -48,10 +46,10 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
             firstEpic = epicList.get(0);
             secondEpic = epicList.get(1);
 
-            Subtask firstSubtask = new Subtask("First subtask", "", firstEpic.getId());
-            Subtask secondSubtask = new Subtask("Second subtask", "", secondEpic.getId());
-            Subtask thirdSubtask = new Subtask("Third subtask", "", secondEpic.getId());
-            Subtask unusedSubtask = new Subtask("Unused subtask", "", firstEpic.getId());
+            Subtask firstSubtask = new Subtask("First subtask", "", LocalDateTime.now(), Duration.ofMinutes(8), firstEpic.getId());
+            Subtask secondSubtask = new Subtask("Second subtask", "", LocalDateTime.now(), Duration.ofMinutes(6), secondEpic.getId());
+            Subtask thirdSubtask = new Subtask("Third subtask", "", LocalDateTime.now(), Duration.ofMinutes(5), secondEpic.getId());
+            Subtask unusedSubtask = new Subtask("Unused subtask", "", LocalDateTime.now(), Duration.ofMinutes(4), firstEpic.getId());
 
             firstManager.createSubtask(firstSubtask);
             firstManager.createSubtask(secondSubtask);
@@ -61,31 +59,28 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
             FileBackedTaskManager secondManager = FileBackedTaskManager.loadFromFile(file, Managers.getDefaultHistory());
 
             System.out.println("Epics from first manager:");
-            firstManager.getEpicList().forEach(e -> System.out.println(Tasks.toString(e)));
+            firstManager.getEpicList().forEach(e -> System.out.println(SERIALIZER.toString(e)));
 
             System.out.println("\nEpics from second manager:");
-            secondManager.getEpicList().forEach(e -> System.out.println(Tasks.toString(e)));
+            secondManager.getEpicList().forEach(e -> System.out.println(SERIALIZER.toString(e)));
 
             System.out.println("\nTasks from first manager:");
-            firstManager.getTaskList().forEach(t -> System.out.println(Tasks.toString(t)));
+            firstManager.getTaskList().forEach(t -> System.out.println(SERIALIZER.toString(t)));
 
             System.out.println("\nTasks from second manager:");
-            secondManager.getTaskList().forEach(t -> System.out.println(Tasks.toString(t)));
+            secondManager.getTaskList().forEach(t -> System.out.println(SERIALIZER.toString(t)));
 
             System.out.println("\nSubtasks from first manager:");
-            firstManager.getSubtaskList().forEach(s -> System.out.println(Tasks.toString(s)));
+            firstManager.getSubtaskList().forEach(s -> System.out.println(SERIALIZER.toString(s)));
 
             System.out.println("\nSubtasks from second manager:");
-            secondManager.getSubtaskList().forEach(s -> System.out.println(Tasks.toString(s)));
+            secondManager.getSubtaskList().forEach(s -> System.out.println(SERIALIZER.toString(s)));
         } catch (Exception exception) {
             System.out.println(exception.getMessage());
         }
     }
 
     public static FileBackedTaskManager loadFromFile(File file, HistoryManager historyManager) {
-        if (file == null) {
-            throw new IllegalArgumentException("File cannot be null");
-        }
         if (file.isDirectory()) {
             throw new IllegalArgumentException("File object cannot be directory");
         }
@@ -97,7 +92,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
             // Skip first line with title.
             if (reader.ready()) reader.readLine();
             while (reader.ready()) {
-                Task task = Tasks.fromString(reader.readLine());
+                Task task = SERIALIZER.fromString(reader.readLine());
 
                 if (task instanceof Epic epic) {
                     taskManager.epicMap.put(epic.getId(), epic);
@@ -210,7 +205,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
             subtaskMap.forEach((id, s) -> appendContentToStringBuilder(fileContent, s));
 
             if (!fileContent.isEmpty()) {
-                fileContent.insert(0, TITLE + System.lineSeparator());
+                fileContent.insert(0, SERIALIZER.getTitle() + System.lineSeparator());
                 fileContent.delete(fileContent.length() - 2, fileContent.length());
                 fileWriter.write(fileContent.toString());
             }
@@ -220,6 +215,6 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     }
 
     private static void appendContentToStringBuilder(StringBuilder source, Task task) {
-        source.append(Tasks.toString(task)).append(System.lineSeparator());
+        source.append(SERIALIZER.toString(task)).append(System.lineSeparator());
     }
 }

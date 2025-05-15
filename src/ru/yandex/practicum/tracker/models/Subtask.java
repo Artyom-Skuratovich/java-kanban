@@ -1,10 +1,13 @@
 package ru.yandex.practicum.tracker.models;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+
 public class Subtask extends Task {
     private long parentEpicId;
 
-    public Subtask(String name, String description, long parentEpicId) {
-        super(name, description);
+    public Subtask(String name, String description, LocalDateTime startTime, Duration duration, long parentEpicId) {
+        super(name, description, startTime, duration);
         this.parentEpicId = parentEpicId;
     }
 

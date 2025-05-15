@@ -1,5 +1,7 @@
 package ru.yandex.practicum.tracker.models;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -7,8 +9,8 @@ import java.util.Set;
 public class Epic extends Task {
     private final Set<Long> subtaskIds;
 
-    public Epic(String name, String description) {
-        super(name, description);
+    public Epic(String name, String description, LocalDateTime startTime, Duration duration) {
+        super(name, description, startTime, duration);
         subtaskIds = new HashSet<>();
     }
 
