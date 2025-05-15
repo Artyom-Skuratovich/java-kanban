@@ -24,6 +24,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
 
     public FileBackedTaskManager(HistoryManager historyManager, String path) {
         super(historyManager);
+        Objects.requireNonNull(path, "Path can't be null");
         this.path = path;
     }
 
@@ -81,6 +82,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     }
 
     public static FileBackedTaskManager loadFromFile(File file, HistoryManager historyManager) {
+        Objects.requireNonNull(file, "File can't be null");
         if (file.isDirectory()) {
             throw new IllegalArgumentException("File object cannot be directory");
         }

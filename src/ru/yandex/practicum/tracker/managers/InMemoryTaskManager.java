@@ -17,10 +17,7 @@ public class InMemoryTaskManager implements TaskManager {
     private final HistoryManager historyManager;
 
     public InMemoryTaskManager(HistoryManager historyManager) {
-        if (historyManager == null) {
-            throw new IllegalArgumentException("History manager cannot be null");
-        }
-
+        Objects.requireNonNull(historyManager, "History manager can't be null");
         this.historyManager = historyManager;
         taskMap = new HashMap<>();
         subtaskMap = new HashMap<>();
@@ -90,9 +87,7 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void createTask(Task task) {
-        if (task == null) {
-            throw new IllegalArgumentException("Task cannot be null");
-        }
+        Objects.requireNonNull(task, "Task can't be null");
         if ((task instanceof Subtask) || (task instanceof Epic)) {
             throw new IllegalArgumentException("Task must be only Task type");
         }
@@ -104,9 +99,7 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void createSubtask(Subtask subtask) {
-        if (subtask == null) {
-            throw new IllegalArgumentException("Subtask cannot be null");
-        }
+        Objects.requireNonNull(subtask, "Subtask can't be null");
         Epic parentEpic = epicMap.get(subtask.getParentEpicId());
         if (parentEpic == null) {
             throw new IllegalArgumentException("Parent epic doesn't exist");
@@ -121,9 +114,7 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void createEpic(Epic epic) {
-        if (epic == null) {
-            throw new IllegalArgumentException("Epic cannot be null");
-        }
+        Objects.requireNonNull(epic, "Epic can't be null");
         Epic copy = new Epic(epic);
         copy.setId(getNextId());
         epicMap.put(copy.getId(), copy);
@@ -133,9 +124,7 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void updateTask(Task task) {
-        if (task == null) {
-            throw new IllegalArgumentException("Task cannot be null");
-        }
+        Objects.requireNonNull(task, "Task can't be null");
         if ((task instanceof Subtask) || (task instanceof Epic)) {
             throw new IllegalArgumentException("Task must be only Task type");
         }
@@ -148,9 +137,7 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void updateSubtask(Subtask subtask) {
-        if (subtask == null) {
-            throw new IllegalArgumentException("Subtask cannot be null");
-        }
+        Objects.requireNonNull(subtask, "Subtask can't be null");
         Epic parentEpic = epicMap.get(subtask.getParentEpicId());
         if (parentEpic == null) {
             throw new IllegalArgumentException("Parent epic doesn't exist");
@@ -177,10 +164,7 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void updateEpic(Epic epic) {
-        if (epic == null) {
-            throw new IllegalArgumentException("Epic cannot be null");
-        }
-
+        Objects.requireNonNull(epic, "Epic can't be null");
         if (epicMap.containsKey(epic.getId())) {
             Epic copy = new Epic(epic);
             epicMap.put(copy.getId(), copy);

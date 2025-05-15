@@ -5,6 +5,7 @@ import ru.yandex.practicum.tracker.exceptions.TaskFormatException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 
 public class TaskSerializer {
     private static final int WORD_COUNT = 8;
@@ -22,6 +23,8 @@ public class TaskSerializer {
     private final String title;
 
     public TaskSerializer(String wordSeparator, DateTimeFormatter formatter) {
+        Objects.requireNonNull(wordSeparator, "Word separator can't be null");
+        Objects.requireNonNull(formatter, "Formatter can't be null");
         this.wordSeparator = wordSeparator;
         this.formatter = formatter;
         title = String.join(wordSeparator,
@@ -29,6 +32,7 @@ public class TaskSerializer {
     }
 
     public String toString(Task task) {
+        Objects.requireNonNull(task, "Task can't be null");
         String id = Long.toString(task.getId());
         String type = task.getClass().getSimpleName();
         String name = task.getName();
@@ -42,6 +46,7 @@ public class TaskSerializer {
     }
 
     public Task fromString(String value) {
+        Objects.requireNonNull(value, "Value can't be null");
         String[] words = value.split(wordSeparator, WORD_COUNT);
         if (words.length != WORD_COUNT) {
             throw new TaskFormatException("String value has bad format and can't be converted to Task");

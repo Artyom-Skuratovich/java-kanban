@@ -4,10 +4,7 @@ import ru.yandex.practicum.tracker.models.Epic;
 import ru.yandex.practicum.tracker.models.Subtask;
 import ru.yandex.practicum.tracker.models.Task;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class InMemoryHistoryManager implements HistoryManager {
     private static class Node {
@@ -32,10 +29,7 @@ public class InMemoryHistoryManager implements HistoryManager {
 
     @Override
     public void add(Task task) {
-        if (task == null) {
-            throw new IllegalArgumentException("Task cannot be null");
-        }
-
+        Objects.requireNonNull(task, "Task can't be null");
         linkLast(task);
     }
 

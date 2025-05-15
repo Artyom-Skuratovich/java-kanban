@@ -21,6 +21,7 @@ public class Task {
     }
 
     public Task(Task other) {
+        Objects.requireNonNull(other, "Task can't be null");
         id = other.id;
         name = other.name;
         description = other.description;
