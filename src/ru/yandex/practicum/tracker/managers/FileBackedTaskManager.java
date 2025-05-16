@@ -5,7 +5,7 @@ import ru.yandex.practicum.tracker.exceptions.ManagerSaveException;
 import ru.yandex.practicum.tracker.models.Epic;
 import ru.yandex.practicum.tracker.models.Subtask;
 import ru.yandex.practicum.tracker.models.Task;
-import ru.yandex.practicum.tracker.models.TaskSerializer;
+import ru.yandex.practicum.tracker.utils.TaskSerializer;
 
 import java.io.*;
 import java.nio.charset.Charset;

@@ -1,6 +1,10 @@
-package ru.yandex.practicum.tracker.models;
+package ru.yandex.practicum.tracker.utils;
 
 import ru.yandex.practicum.tracker.exceptions.TaskFormatException;
+import ru.yandex.practicum.tracker.models.Epic;
+import ru.yandex.practicum.tracker.models.Status;
+import ru.yandex.practicum.tracker.models.Subtask;
+import ru.yandex.practicum.tracker.models.Task;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
