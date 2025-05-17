@@ -45,13 +45,13 @@ public class TaskScheduler {
         changeIntervalStatus(startTime, endTime, INTERVAL_FREE);
     }
 
-    private static LocalDateTime roundToNearerInterval(LocalDateTime dateTime) {
+    private static LocalDateTime roundToNearestInterval(LocalDateTime dateTime) {
         dateTime = dateTime.truncatedTo(ChronoUnit.MINUTES);
         return dateTime.withMinute(INTERVAL_MINUTES * (dateTime.getMinute() / INTERVAL_MINUTES));
     }
 
     private void changeIntervalStatus(LocalDateTime startTime, LocalDateTime endTime, boolean status) {
-        LocalDateTime current = roundToNearerInterval(startTime);
+        LocalDateTime current = roundToNearestInterval(startTime);
         while (current.isBefore(endTime) || current.isEqual(endTime)) {
             intervals.put(current, status);
             current = current.plusMinutes(INTERVAL_MINUTES);
@@ -59,7 +59,7 @@ public class TaskScheduler {
     }
 
     private boolean isAvailable(LocalDateTime startTime, LocalDateTime endTime) {
-        LocalDateTime current = roundToNearerInterval(startTime);
+        LocalDateTime current = roundToNearestInterval(startTime);
         while (current.isBefore(endTime) || current.isEqual(endTime)) {
             Boolean available = intervals.get(current);
             if (available == null) {
