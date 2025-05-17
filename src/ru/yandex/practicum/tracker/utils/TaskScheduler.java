@@ -38,7 +38,7 @@ public class TaskScheduler {
         return false;
     }
 
-    private void removeSchedule(Task task) {
+    public void removeSchedule(Task task) {
         Objects.requireNonNull(task, "Task can't be null");
         LocalDateTime startTime = Objects.requireNonNull(task.getStartTime(), "Start time can't be null");
         LocalDateTime endTime = Objects.requireNonNull(task.getEndTime(), "End time can't be null");
