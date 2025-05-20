@@ -45,20 +45,10 @@ public class TaskScheduler {
         changeIntervalStatus(startTime, endTime, INTERVAL_FREE);
     }
 
-    private static LocalDateTime roundToNearestInterval(LocalDateTime dateTime) {
-        dateTime = dateTime.truncatedTo(ChronoUnit.MINUTES);
-        return dateTime.withMinute(INTERVAL_MINUTES * (dateTime.getMinute() / INTERVAL_MINUTES));
-    }
+    public boolean isAvailable(LocalDateTime startTime, LocalDateTime endTime) {
+        Objects.requireNonNull(startTime, "Start time can't be null");
+        Objects.requireNonNull(endTime, "End time can't be null");
 
-    private void changeIntervalStatus(LocalDateTime startTime, LocalDateTime endTime, boolean status) {
-        LocalDateTime current = roundToNearestInterval(startTime);
-        while (current.isBefore(endTime) || current.isEqual(endTime)) {
-            intervals.put(current, status);
-            current = current.plusMinutes(INTERVAL_MINUTES);
-        }
-    }
-
-    private boolean isAvailable(LocalDateTime startTime, LocalDateTime endTime) {
         LocalDateTime current = roundToNearestInterval(startTime);
         while (current.isBefore(endTime) || current.isEqual(endTime)) {
             Boolean available = intervals.get(current);
@@ -70,5 +60,18 @@ public class TaskScheduler {
             current = current.plusMinutes(INTERVAL_MINUTES);
         }
         return true;
+    }
+
+    private static LocalDateTime roundToNearestInterval(LocalDateTime dateTime) {
+        dateTime = dateTime.truncatedTo(ChronoUnit.MINUTES);
+        return dateTime.withMinute(INTERVAL_MINUTES * (dateTime.getMinute() / INTERVAL_MINUTES));
+    }
+
+    private void changeIntervalStatus(LocalDateTime startTime, LocalDateTime endTime, boolean status) {
+        LocalDateTime current = roundToNearestInterval(startTime);
+        while (current.isBefore(endTime) || current.isEqual(endTime)) {
+            intervals.put(current, status);
+            current = current.plusMinutes(INTERVAL_MINUTES);
+        }
     }
 }
