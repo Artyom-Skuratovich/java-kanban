@@ -1,10 +1,10 @@
 package ru.yandex.practicum.tracker.managers;
 
-import ru.yandex.practicum.tracker.models.Epic;
-import ru.yandex.practicum.tracker.models.Subtask;
-import ru.yandex.practicum.tracker.models.Task;
-import ru.yandex.practicum.tracker.models.Status;
+import ru.yandex.practicum.tracker.models.*;
+import ru.yandex.practicum.tracker.utils.TaskScheduler;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 
 public class InMemoryTaskManager implements TaskManager {
@@ -14,17 +14,21 @@ public class InMemoryTaskManager implements TaskManager {
     protected final Map<Long, Subtask> subtaskMap;
     protected final Map<Long, Epic> epicMap;
 
+    protected final Set<Task> prioritizedTasks;
+    protected final TaskScheduler scheduler;
+
     private final HistoryManager historyManager;
 
     public InMemoryTaskManager(HistoryManager historyManager) {
-        if (historyManager == null) {
-            throw new IllegalArgumentException("History manager cannot be null");
-        }
-
+        Objects.requireNonNull(historyManager, "History manager can't be null");
         this.historyManager = historyManager;
         taskMap = new HashMap<>();
         subtaskMap = new HashMap<>();
         epicMap = new HashMap<>();
+
+        prioritizedTasks = new TreeSet<>(Comparator.comparing(Task::getStartTime));
+        LocalDateTime now = LocalDateTime.now();
+        scheduler = new TaskScheduler(now, now.plusYears(1));
     }
 
     @Override
@@ -53,6 +57,11 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public List<Task> getHistory() {
         return historyManager.getHistory();
+    }
+
+    @Override
+    public List<Task> getPrioritizedTasks() {
+        return prioritizedTasks.stream().map(Tasks::copyTask).toList();
     }
 
     @Override
@@ -89,24 +98,31 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public void createTask(Task task) {
-        if (task == null) {
-            throw new IllegalArgumentException("Task cannot be null");
-        }
+    public boolean checkIntersection(Task task) {
+        Objects.requireNonNull(task, "Task cannot be null");
+        return scheduler.isAvailable(task.getStartTime(), task.getEndTime());
+    }
+
+    @Override
+    public long createTask(Task task) {
+        Objects.requireNonNull(task, "Task can't be null");
         if ((task instanceof Subtask) || (task instanceof Epic)) {
             throw new IllegalArgumentException("Task must be only Task type");
         }
 
         Task copy = new Task(task);
         copy.setId(getNextId());
+
+        scheduleTask(copy, taskMap, false);
         taskMap.put(copy.getId(), copy);
+        addToPriorityList(copy);
+
+        return copy.getId();
     }
 
     @Override
-    public void createSubtask(Subtask subtask) {
-        if (subtask == null) {
-            throw new IllegalArgumentException("Subtask cannot be null");
-        }
+    public long createSubtask(Subtask subtask) {
+        Objects.requireNonNull(subtask, "Subtask can't be null");
         Epic parentEpic = epicMap.get(subtask.getParentEpicId());
         if (parentEpic == null) {
             throw new IllegalArgumentException("Parent epic doesn't exist");
@@ -114,43 +130,52 @@ public class InMemoryTaskManager implements TaskManager {
 
         Subtask copy = new Subtask(subtask);
         copy.setId(getNextId());
+
+        scheduleTask(copy, subtaskMap, false);
         subtaskMap.put(copy.getId(), copy);
         parentEpic.addSubtaskId(copy.getId());
         changeEpicStatus(parentEpic);
+        setStartTimeAndDurationForEpic(parentEpic);
+        addToPriorityList(copy);
+
+        return copy.getId();
     }
 
     @Override
-    public void createEpic(Epic epic) {
-        if (epic == null) {
-            throw new IllegalArgumentException("Epic cannot be null");
-        }
+    public long createEpic(Epic epic) {
+        Objects.requireNonNull(epic, "Epic can't be null");
         Epic copy = new Epic(epic);
         copy.setId(getNextId());
+
+        scheduleTask(copy, epicMap, false);
         epicMap.put(copy.getId(), copy);
         removeAllUnusedSubtaskIds(copy);
         changeEpicStatus(copy);
+        setStartTimeAndDurationForEpic(copy);
+        addToPriorityList(copy);
+
+        return copy.getId();
     }
 
     @Override
     public void updateTask(Task task) {
-        if (task == null) {
-            throw new IllegalArgumentException("Task cannot be null");
-        }
+        Objects.requireNonNull(task, "Task can't be null");
         if ((task instanceof Subtask) || (task instanceof Epic)) {
             throw new IllegalArgumentException("Task must be only Task type");
         }
 
         if (taskMap.containsKey(task.getId())) {
             Task copy = new Task(task);
+
+            scheduleTask(copy, taskMap, true);
             taskMap.put(copy.getId(), copy);
+            addToPriorityList(copy);
         }
     }
 
     @Override
     public void updateSubtask(Subtask subtask) {
-        if (subtask == null) {
-            throw new IllegalArgumentException("Subtask cannot be null");
-        }
+        Objects.requireNonNull(subtask, "Subtask can't be null");
         Epic parentEpic = epicMap.get(subtask.getParentEpicId());
         if (parentEpic == null) {
             throw new IllegalArgumentException("Parent epic doesn't exist");
@@ -169,43 +194,55 @@ public class InMemoryTaskManager implements TaskManager {
             }
 
             Subtask copy = new Subtask(subtask);
+
+            scheduleTask(copy, subtaskMap, true);
             subtaskMap.put(copy.getId(), copy);
             parentEpic.addSubtaskId(copy.getId());
             changeEpicStatus(parentEpic);
+            setStartTimeAndDurationForEpic(parentEpic);
+            addToPriorityList(copy);
         }
     }
 
     @Override
     public void updateEpic(Epic epic) {
-        if (epic == null) {
-            throw new IllegalArgumentException("Epic cannot be null");
-        }
-
+        Objects.requireNonNull(epic, "Epic can't be null");
         if (epicMap.containsKey(epic.getId())) {
             Epic copy = new Epic(epic);
+
+            scheduleTask(copy, epicMap, true);
             epicMap.put(copy.getId(), copy);
             removeAllUnusedSubtaskIds(copy);
             changeEpicStatus(copy);
+            setStartTimeAndDurationForEpic(copy);
+            addToPriorityList(copy);
         }
     }
 
     @Override
     public void removeTask(long id) {
-        taskMap.remove(id);
-        historyManager.remove(id);
+        Task removedTask = taskMap.remove(id);
+        if (removedTask != null) {
+            scheduler.removeSchedule(removedTask);
+            historyManager.remove(id);
+            prioritizedTasks.removeIf(t -> t.getId() == id);
+        }
     }
 
     @Override
     public void removeSubtask(long id) {
         Subtask removedSubtask = subtaskMap.remove(id);
         if (removedSubtask != null) {
+            scheduler.removeSchedule(removedSubtask);
             Epic parentEpic = epicMap.get(removedSubtask.getParentEpicId());
             if (parentEpic != null) {
                 parentEpic.removeSubtaskId(id);
                 changeEpicStatus(parentEpic);
+                setStartTimeAndDurationForEpic(parentEpic);
             }
         }
         historyManager.remove(id);
+        prioritizedTasks.removeIf(t -> t.getId() == id);
     }
 
     @Override
@@ -213,34 +250,57 @@ public class InMemoryTaskManager implements TaskManager {
         Epic removedEpic = epicMap.remove(id);
         if (removedEpic != null) {
             removedEpic.getSubtaskIds().forEach(subtaskId -> {
+                Subtask subtask = subtaskMap.get(subtaskId);
+                if (subtask != null) {
+                    scheduler.removeSchedule(subtask);
+                }
                 subtaskMap.remove(subtaskId);
                 historyManager.remove(subtaskId);
             });
         }
         historyManager.remove(id);
+        prioritizedTasks.removeIf(t -> t.getId() == id);
     }
 
     @Override
     public void removeAllTasks() {
-        taskMap.forEach((id, task) -> historyManager.remove(id));
+        taskMap.forEach((id, task) -> {
+            historyManager.remove(id);
+            prioritizedTasks.remove(task);
+            scheduler.removeSchedule(task);
+        });
         taskMap.clear();
     }
 
     @Override
     public void removeAllSubtasks() {
-        subtaskMap.forEach((id, subtask) -> historyManager.remove(id));
+        subtaskMap.forEach((id, subtask) -> {
+            historyManager.remove(id);
+            prioritizedTasks.remove(subtask);
+            scheduler.removeSchedule(subtask);
+        });
         subtaskMap.clear();
         Collection<Epic> epics = epicMap.values();
         for (Epic epic : epics) {
             epic.removeAllSubtaskIds();
             epic.setStatus(Status.NEW);
+            epic.setDuration(Duration.ZERO);
+            epic.setStartTime(null);
         }
     }
 
     @Override
     public void removeAllEpics() {
-        subtaskMap.forEach((id, subtask) -> historyManager.remove(id));
-        epicMap.forEach((id, subtask) -> historyManager.remove(id));
+        subtaskMap.forEach((id, subtask) -> {
+            historyManager.remove(id);
+            prioritizedTasks.remove(subtask);
+            scheduler.removeSchedule(subtask);
+        });
+        epicMap.forEach((id, epic) -> {
+            historyManager.remove(id);
+            prioritizedTasks.remove(epic);
+            scheduler.removeSchedule(epic);
+        });
         epicMap.clear();
         subtaskMap.clear();
     }
@@ -265,11 +325,50 @@ public class InMemoryTaskManager implements TaskManager {
         }
     }
 
+    private void setStartTimeAndDurationForEpic(Epic epic) {
+        Duration duration = Duration.ZERO;
+        LocalDateTime startTime = null;
+
+        for (Subtask subtask : getSubtaskListForEpic(epic.getId())) {
+            Duration subtaskDuration = subtask.getDuration();
+            LocalDateTime subtaskStartTime = subtask.getStartTime();
+
+            if ((subtaskStartTime != null) && (subtaskDuration != null)) {
+                if ((startTime == null) || subtaskStartTime.isBefore(startTime)) {
+                    startTime = subtaskStartTime;
+                }
+                duration = duration.plus(subtaskDuration);
+            }
+        }
+
+        epic.setStartTime(startTime);
+        epic.setDuration(duration);
+    }
+
     private void removeAllUnusedSubtaskIds(Epic epic) {
         epic.getSubtaskIds().forEach(id -> {
             if (!subtaskMap.containsKey(id)) {
                 epic.removeSubtaskId(id);
             }
         });
+    }
+
+    private <T extends Task> void scheduleTask(T task, Map<Long, T> map, boolean removeIfExists) {
+        if ((task.getStartTime() == null) || (task.getDuration() == null)) {
+            return;
+        }
+        T currentTask = map.get(task.getId());
+        if (removeIfExists && (currentTask != null)) {
+            scheduler.removeSchedule(currentTask);
+        }
+        scheduler.addSchedule(task);
+    }
+
+    private void addToPriorityList(Task task) {
+        if (task.getStartTime() != null) {
+            // Remove if already exists.
+            prioritizedTasks.remove(task);
+            prioritizedTasks.add(task);
+        }
     }
 }

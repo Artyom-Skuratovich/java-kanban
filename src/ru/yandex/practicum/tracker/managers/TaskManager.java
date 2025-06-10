@@ -18,17 +18,21 @@ public interface TaskManager {
 
     List<Task> getHistory();
 
+    List<Task> getPrioritizedTasks();
+
     Optional<Task> getTaskById(long id);
 
     Optional<Subtask> getSubtaskById(long id);
 
     Optional<Epic> getEpicById(long id);
 
-    void createTask(Task task);
+    boolean checkIntersection(Task task);
 
-    void createSubtask(Subtask subtask);
+    long createTask(Task task);
 
-    void createEpic(Epic epic);
+    long createSubtask(Subtask subtask);
+
+    long createEpic(Epic epic);
 
     void updateTask(Task task);
 
