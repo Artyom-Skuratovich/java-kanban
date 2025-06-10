@@ -1,5 +1,7 @@
 package ru.yandex.practicum.tracker.models;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 public class Task {
@@ -7,22 +9,25 @@ public class Task {
     private String name;
     private String description;
     private Status status;
+    private LocalDateTime startTime;
+    private Duration duration;
 
-    public Task(String name, String description) {
+    public Task(String name, String description, LocalDateTime startTime, Duration duration) {
         this.name = name;
         this.description = description;
+        this.startTime = startTime;
+        this.duration = duration;
         status = Status.NEW;
     }
 
     public Task(Task other) {
-        if (other == null) {
-            throw new IllegalArgumentException("Task cannot be null");
-        }
-
+        Objects.requireNonNull(other, "Task can't be null");
         id = other.id;
         name = other.name;
         description = other.description;
         status = other.status;
+        startTime = other.startTime;
+        duration = other.duration;
     }
 
     public long getId() {
@@ -55,6 +60,29 @@ public class Task {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public Duration getDuration() {
+        return duration;
+    }
+
+    public void setDuration(Duration duration) {
+        this.duration = duration;
+    }
+
+    public LocalDateTime getEndTime() {
+        if ((startTime == null) || (duration == null)) {
+            return null;
+        }
+        return startTime.plusMinutes(duration.toMinutes());
     }
 
     @Override
