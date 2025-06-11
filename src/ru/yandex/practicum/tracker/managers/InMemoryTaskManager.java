@@ -2,6 +2,7 @@ package ru.yandex.practicum.tracker.managers;
 
 import ru.yandex.practicum.tracker.models.*;
 import ru.yandex.practicum.tracker.utils.TaskScheduler;
+import ru.yandex.practicum.tracker.utils.TaskSerializer;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -61,7 +62,7 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public List<Task> getPrioritizedTasks() {
-        return prioritizedTasks.stream().map(Tasks::copyTask).toList();
+        return prioritizedTasks.stream().map(TaskSerializer::copyTask).toList();
     }
 
     @Override

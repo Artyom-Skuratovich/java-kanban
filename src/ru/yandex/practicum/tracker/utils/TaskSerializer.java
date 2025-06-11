@@ -35,6 +35,17 @@ public class TaskSerializer {
                 "id", "type", "name", "status", "description", "startTime", "duration", "epic");
     }
 
+    public static Task copyTask(Task task) {
+        Objects.requireNonNull(task, "Task cannot be null");
+
+        if (task instanceof Subtask) {
+            return new Subtask((Subtask) task);
+        } else if (task instanceof Epic) {
+            return new Epic((Epic) task);
+        }
+        return new Task(task);
+    }
+
     public String toString(Task task) {
         Objects.requireNonNull(task, "Task can't be null");
         String id = Long.toString(task.getId());

@@ -1,7 +1,7 @@
 package ru.yandex.practicum.tracker.managers;
 
 import ru.yandex.practicum.tracker.models.Task;
-import ru.yandex.practicum.tracker.models.Tasks;
+import ru.yandex.practicum.tracker.utils.TaskSerializer;
 
 import java.util.*;
 
@@ -50,7 +50,7 @@ public class InMemoryHistoryManager implements HistoryManager {
         Node current = head;
 
         while (current != null) {
-            taskList.add(Tasks.copyTask(current.data));
+            taskList.add(TaskSerializer.copyTask(current.data));
             current = current.next;
         }
         return taskList;
@@ -59,7 +59,7 @@ public class InMemoryHistoryManager implements HistoryManager {
     private void linkLast(Task task) {
         remove(task.getId());
 
-        Node node = new Node(Tasks.copyTask(task), null, tail);
+        Node node = new Node(TaskSerializer.copyTask(task), null, tail);
         if (head == null) {
             head = node;
         } else {
