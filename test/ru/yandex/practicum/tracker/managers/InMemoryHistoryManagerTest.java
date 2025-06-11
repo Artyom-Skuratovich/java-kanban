@@ -6,6 +6,8 @@ import ru.yandex.practicum.tracker.models.Epic;
 import ru.yandex.practicum.tracker.models.Subtask;
 import ru.yandex.practicum.tracker.models.Task;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -20,8 +22,9 @@ class InMemoryHistoryManagerTest {
 
     @Test
     public void shouldReturnHistoryWithThreeTasksAfterCreationFourOnesAndRemoveOne() {
-        Task task = new Task("Task", "Task");
-        Subtask subtask = new Subtask("Subtask", "Subtask", 1);
+        LocalDateTime now = LocalDateTime.now();
+        Task task = new Task("Task", "Task", now, Duration.ofMinutes(1));
+        Subtask subtask = new Subtask("Subtask", "Subtask", now, Duration.ofMinutes(1), 1);
         subtask.setId(task.getId() + 1);
         Epic firstEpic = new Epic("Epic", "Epic");
         firstEpic.setId(subtask.getId() + 1);

@@ -8,7 +8,7 @@ public class Epic extends Task {
     private final Set<Long> subtaskIds;
 
     public Epic(String name, String description) {
-        super(name, description);
+        super(name, description, null, null);
         subtaskIds = new HashSet<>();
     }
 

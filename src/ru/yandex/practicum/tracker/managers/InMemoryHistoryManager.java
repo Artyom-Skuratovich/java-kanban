@@ -1,13 +1,9 @@
 package ru.yandex.practicum.tracker.managers;
 
-import ru.yandex.practicum.tracker.models.Epic;
-import ru.yandex.practicum.tracker.models.Subtask;
 import ru.yandex.practicum.tracker.models.Task;
+import ru.yandex.practicum.tracker.utils.TaskSerializer;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class InMemoryHistoryManager implements HistoryManager {
     private static class Node {
@@ -32,10 +28,7 @@ public class InMemoryHistoryManager implements HistoryManager {
 
     @Override
     public void add(Task task) {
-        if (task == null) {
-            throw new IllegalArgumentException("Task cannot be null");
-        }
-
+        Objects.requireNonNull(task, "Task can't be null");
         linkLast(task);
     }
 
@@ -52,21 +45,12 @@ public class InMemoryHistoryManager implements HistoryManager {
         return getTasks();
     }
 
-    private Task copyTask(Task task) {
-        if (task instanceof Subtask) {
-            return new Subtask((Subtask) task);
-        } else if (task instanceof Epic) {
-            return new Epic((Epic) task);
-        }
-        return new Task(task);
-    }
-
     private List<Task> getTasks() {
         List<Task> taskList = new ArrayList<>(nodeMap.size());
         Node current = head;
 
         while (current != null) {
-            taskList.add(copyTask(current.data));
+            taskList.add(TaskSerializer.copyTask(current.data));
             current = current.next;
         }
         return taskList;
@@ -75,7 +59,7 @@ public class InMemoryHistoryManager implements HistoryManager {
     private void linkLast(Task task) {
         remove(task.getId());
 
-        Node node = new Node(copyTask(task), null, tail);
+        Node node = new Node(TaskSerializer.copyTask(task), null, tail);
         if (head == null) {
             head = node;
         } else {
