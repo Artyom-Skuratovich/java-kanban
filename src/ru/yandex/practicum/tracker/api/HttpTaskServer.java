@@ -1,9 +1,7 @@
 package ru.yandex.practicum.tracker.api;
 
 import com.sun.net.httpserver.HttpServer;
-import ru.yandex.practicum.tracker.api.handlers.EpicHandler;
-import ru.yandex.practicum.tracker.api.handlers.SubtaskHandler;
-import ru.yandex.practicum.tracker.api.handlers.TaskHandler;
+import ru.yandex.practicum.tracker.api.handlers.*;
 import ru.yandex.practicum.tracker.managers.FileBackedTaskManager;
 import ru.yandex.practicum.tracker.managers.InMemoryHistoryManager;
 import ru.yandex.practicum.tracker.managers.TaskManager;
@@ -21,6 +19,8 @@ public class HttpTaskServer {
         server.createContext("/tasks", new TaskHandler(manager));
         server.createContext("/subtasks", new SubtaskHandler(manager));
         server.createContext("/epics", new EpicHandler(manager));
+        server.createContext("/history", new HistoryHandler(manager));
+        server.createContext("/prioritized", new PrioritizedHandler(manager));
     }
 
     public static void main(String[] args) {
