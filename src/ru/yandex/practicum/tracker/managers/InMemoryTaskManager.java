@@ -1,5 +1,6 @@
 package ru.yandex.practicum.tracker.managers;
 
+import ru.yandex.practicum.tracker.exceptions.TasksIntersectException;
 import ru.yandex.practicum.tracker.models.*;
 import ru.yandex.practicum.tracker.utils.TaskScheduler;
 import ru.yandex.practicum.tracker.utils.TaskSerializer;
@@ -148,7 +149,6 @@ public class InMemoryTaskManager implements TaskManager {
         Epic copy = new Epic(epic);
         copy.setId(getNextId());
 
-        scheduleTask(copy, epicMap, false);
         epicMap.put(copy.getId(), copy);
         removeAllUnusedSubtaskIds(copy);
         changeEpicStatus(copy);
@@ -211,7 +211,6 @@ public class InMemoryTaskManager implements TaskManager {
         if (epicMap.containsKey(epic.getId())) {
             Epic copy = new Epic(epic);
 
-            scheduleTask(copy, epicMap, true);
             epicMap.put(copy.getId(), copy);
             removeAllUnusedSubtaskIds(copy);
             changeEpicStatus(copy);
@@ -362,7 +361,9 @@ public class InMemoryTaskManager implements TaskManager {
         if (removeIfExists && (currentTask != null)) {
             scheduler.removeSchedule(currentTask);
         }
-        scheduler.addSchedule(task);
+        if (!scheduler.addSchedule(task)) {
+            throw new TasksIntersectException("Can't schedule task because it intersects another one");
+        }
     }
 
     private void addToPriorityList(Task task) {
