@@ -25,9 +25,6 @@ abstract class BaseHttpHandler<T extends Task> implements HttpHandler {
     private static final Charset CHARSET = StandardCharsets.UTF_8;
     private final Gson gson;
 
-    protected record ResponseMessage(String message) {
-    }
-
     BaseHttpHandler() {
         gson = new GsonBuilder()
                 .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
@@ -58,15 +55,21 @@ abstract class BaseHttpHandler<T extends Task> implements HttpHandler {
 
     protected void sendResponse(HttpExchange exchange, Object object, int code) throws IOException {
         Headers headers = exchange.getResponseHeaders();
-        headers.set("Content-Type", "application/json; charset=" + CHARSET);
 
-        String json = gson.toJson(object);
-        byte[] responseBody = json.getBytes(CHARSET);
+        if (object == null) {
+            headers.set("Content-Length", "0");
+            exchange.sendResponseHeaders(code, 0);
+        } else {
+            headers.set("Content-Type", "application/json; charset=" + CHARSET);
 
-        exchange.sendResponseHeaders(code, responseBody.length);
+            String json = gson.toJson(object);
+            byte[] responseBody = json.getBytes(CHARSET);
 
-        try (OutputStream os = exchange.getResponseBody()) {
-            os.write(responseBody);
+            exchange.sendResponseHeaders(code, responseBody.length);
+
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(responseBody);
+            }
         }
     }
 
@@ -87,11 +90,11 @@ abstract class BaseHttpHandler<T extends Task> implements HttpHandler {
 
                 sendResponse(exchange, optionalValue.get(), 200);
             } catch (NumberFormatException exception) {
-                sendResponse(exchange, new ResponseMessage("Id from URI isn't a number"), 400);
+                sendResponse(exchange, null, 400);
             } catch (TaskNotFoundException exception) {
-                sendResponse(exchange, new ResponseMessage(exception.getMessage()), 404);
+                sendResponse(exchange, null, 404);
             } catch (Exception exception) {
-                sendResponse(exchange, new ResponseMessage("Internal server error"), 500);
+                sendResponse(exchange, null, 500);
             }
         }
     }
@@ -100,21 +103,21 @@ abstract class BaseHttpHandler<T extends Task> implements HttpHandler {
         try {
             String json = new String(exchange.getRequestBody().readAllBytes(), CHARSET);
             T value = gson.fromJson(json, getType());
-            Optional<T> optionalValue = getById(value.getId());
+            long id = value.getId();
+            Optional<T> optionalValue = getById(id);
 
             if (optionalValue.isEmpty()) {
-                long id = create(value);
-                sendResponse(exchange, new ResponseMessage("Task created with id=" + id), 201);
+                id = create(value);
             } else {
                 update(value);
-                sendResponse(exchange, new ResponseMessage("Task updated"), 201);
             }
+            sendResponse(exchange, getById(id).get(), 200);
         } catch (JsonSyntaxException exception) {
-            sendResponse(exchange, new ResponseMessage("Request body is incorrect"), 400);
+            sendResponse(exchange, null, 400);
         } catch (TasksIntersectException exception) {
-            sendResponse(exchange, new ResponseMessage(exception.getMessage()), 406);
+            sendResponse(exchange, null, 406);
         } catch (Exception exception) {
-            sendResponse(exchange, new ResponseMessage("Internal server error"), 500);
+            sendResponse(exchange, null, 500);
         }
     }
 
@@ -125,11 +128,11 @@ abstract class BaseHttpHandler<T extends Task> implements HttpHandler {
         try {
             long id = Long.parseLong(pathComponents[2]);
             delete(id);
-            sendResponse(exchange, new ResponseMessage("Task deleted"), 200);
+            sendResponse(exchange, null, 200);
         } catch (NumberFormatException exception) {
-            sendResponse(exchange, new ResponseMessage("Id from URI isn't a number"), 400);
+            sendResponse(exchange, null, 400);
         } catch (Exception exception) {
-            sendResponse(exchange, new ResponseMessage("Internal server error"), 500);
+            sendResponse(exchange, null, 500);
         }
     }
 }

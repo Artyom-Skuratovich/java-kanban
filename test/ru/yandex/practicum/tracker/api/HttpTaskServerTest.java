@@ -58,7 +58,7 @@ class HttpTaskServerTest {
     // POST requests.
 
     @Test
-    public void shouldAddNewTaskAndReturnStatus201() {
+    public void shouldAddNewTaskAndReturnStatus200() {
         try (HttpClient client = HttpClient.newHttpClient()) {
             Task task = new Task("Task", "Some description", LocalDateTime.now(), Duration.ofMinutes(60));
             String json = gson.toJson(task);
@@ -70,19 +70,23 @@ class HttpTaskServerTest {
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            assertEquals(201, response.statusCode(), response.body());
+            assertEquals(200, response.statusCode(), "Неверный статус");
 
             List<Task> tasksFromManager = manager.getTaskList();
+            Task taskFromResponse = gson.fromJson(response.body(), Task.class);
 
             assertEquals(1, tasksFromManager.size(), "Некорректное количество задач");
             assertEquals(task.getName(), tasksFromManager.getFirst().getName(), "Некорректное имя задачи");
+
+            assertEquals(tasksFromManager.getFirst(), taskFromResponse, "Id задач не совпадает");
+            assertEquals(task.getStartTime(), taskFromResponse.getStartTime(), "Время задач не совпадает");
         } catch (Throwable exception) {
             fail(exception.getMessage());
         }
     }
 
     @Test
-    public void shouldUpdateTaskAndReturnStatus201() {
+    public void shouldUpdateTaskAndReturnStatus200() {
         try (HttpClient client = HttpClient.newHttpClient()) {
             Task task = new Task("Task", "Some description", LocalDateTime.now(), Duration.ofMinutes(60));
             long id = manager.createTask(task);
@@ -102,12 +106,14 @@ class HttpTaskServerTest {
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            assertEquals(201, response.statusCode(), response.body());
+            assertEquals(200, response.statusCode(), "Неверный статус");
 
             optionalTask = manager.getTaskById(task.getId());
+            Task fromResponse = gson.fromJson(response.body(), Task.class);
 
             assertTrue(optionalTask.isPresent(), "Обновлённая задача не найдена в TaskManager");
             assertEquals(task.getStartTime(), optionalTask.get().getStartTime(), "Время не обновлено");
+            assertEquals(task.getStartTime(), fromResponse.getStartTime(), "Время из ответа не совпадает со временем из менеджера");
         } catch (Throwable exception) {
             fail(exception.getMessage());
         }
@@ -130,7 +136,8 @@ class HttpTaskServerTest {
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            assertEquals(406, response.statusCode(), response.body());
+            assertEquals(406, response.statusCode(), "Неверный статус");
+            assertTrue(response.body().isEmpty(), "Тело ответа не пустое");
         } catch (Throwable exception) {
             fail(exception.getMessage());
         }
@@ -149,7 +156,7 @@ class HttpTaskServerTest {
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            assertEquals(400, response.statusCode(), response.body());
+            assertEquals(400, response.statusCode(), "Неверный статус");
         } catch (Throwable exception) {
             fail(exception.getMessage());
         }
@@ -174,7 +181,7 @@ class HttpTaskServerTest {
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            assertEquals(200, response.statusCode(), response.body());
+            assertEquals(200, response.statusCode(), "Неверный статус");
 
             List<Task> fromResponse = gson.fromJson(response.body(), new TypeToken<List<Task>>() {
             }.getType());
@@ -199,7 +206,7 @@ class HttpTaskServerTest {
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            assertEquals(200, response.statusCode(), response.body());
+            assertEquals(200, response.statusCode(), "Неверный статус");
 
             Epic fromApi = gson.fromJson(response.body(), Epic.class);
 
@@ -224,7 +231,7 @@ class HttpTaskServerTest {
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            assertEquals(200, response.statusCode(), response.body());
+            assertEquals(200, response.statusCode(), "Неверный статус");
 
             Epic epicFromApi = gson.fromJson(response.body(), Epic.class);
 
@@ -255,7 +262,7 @@ class HttpTaskServerTest {
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            assertEquals(200, response.statusCode(), response.body());
+            assertEquals(200, response.statusCode(), "Неверный статус");
 
             List<Subtask> subtasks = gson.fromJson(response.body(), new TypeToken<List<Subtask>>() {
             }.getType());
@@ -284,7 +291,7 @@ class HttpTaskServerTest {
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            assertEquals(200, response.statusCode(), response.body());
+            assertEquals(200, response.statusCode(), "Неверный статус");
         } catch (Throwable exception) {
             fail(exception.getMessage());
         }
@@ -305,7 +312,7 @@ class HttpTaskServerTest {
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            assertEquals(400, response.statusCode(), response.body());
+            assertEquals(400, response.statusCode(), "Неверный статус");
         } catch (Throwable exception) {
             fail(exception.getMessage());
         }

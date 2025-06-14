@@ -64,11 +64,11 @@ public class EpicHandler extends BaseHttpHandler<Epic> {
                 List<Subtask> subtasks = manager.getSubtaskListForEpic(id);
                 sendResponse(exchange, subtasks, 200);
             } catch (NumberFormatException exception) {
-                sendResponse(exchange, new ResponseMessage("Id from URI isn't a number"), 400);
+                sendResponse(exchange, null, 400);
             } catch (TaskNotFoundException exception) {
-                sendResponse(exchange, new ResponseMessage(exception.getMessage()), 404);
+                sendResponse(exchange, null, 404);
             } catch (Exception exception) {
-                sendResponse(exchange, new ResponseMessage("Internal server error"), 500);
+                sendResponse(exchange, null, 500);
             }
         } else {
             super.get(exchange);
