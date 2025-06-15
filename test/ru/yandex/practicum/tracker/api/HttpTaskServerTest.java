@@ -274,6 +274,22 @@ class HttpTaskServerTest {
         }
     }
 
+    @Test
+    public void shouldReturnStatus404WhenUriIsInvalid() {
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            URI uri = URI.create("http://localhost:" + HttpTaskServer.PORT + "/tasks/1/qwerty");
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(uri)
+                    .GET()
+                    .build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            assertEquals(404, response.statusCode(), "Неверный статус");
+        } catch (Throwable exception) {
+            fail(exception.getMessage());
+        }
+    }
+
     // DELETE requests.
 
     @Test
@@ -312,7 +328,7 @@ class HttpTaskServerTest {
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            assertEquals(400, response.statusCode(), "Неверный статус");
+            assertEquals(404, response.statusCode(), "Неверный статус");
         } catch (Throwable exception) {
             fail(exception.getMessage());
         }

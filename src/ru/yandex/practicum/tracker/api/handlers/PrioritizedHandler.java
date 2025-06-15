@@ -23,6 +23,8 @@ public class PrioritizedHandler extends BaseHttpHandler<Task> {
 
         if (method.equals("GET") && (pathComponents.length == 2)) {
             get(exchange);
+        } else {
+            sendResponse(exchange, null, 404);
         }
     }
 
@@ -53,6 +55,11 @@ public class PrioritizedHandler extends BaseHttpHandler<Task> {
 
     @Override
     protected Class<Task> getType() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    protected boolean checkIntersection(Task value) {
         throw new UnsupportedOperationException();
     }
 }

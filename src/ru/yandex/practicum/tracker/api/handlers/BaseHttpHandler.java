@@ -53,6 +53,8 @@ abstract class BaseHttpHandler<T extends Task> implements HttpHandler {
 
     protected abstract Class<T> getType();
 
+    protected abstract boolean checkIntersection(T value);
+
     protected void sendResponse(HttpExchange exchange, Object object, int code) throws IOException {
         Headers headers = exchange.getResponseHeaders();
 
@@ -89,50 +91,62 @@ abstract class BaseHttpHandler<T extends Task> implements HttpHandler {
                 }
 
                 sendResponse(exchange, optionalValue.get(), 200);
-            } catch (NumberFormatException exception) {
-                sendResponse(exchange, null, 400);
-            } catch (TaskNotFoundException exception) {
+            } catch (NumberFormatException | TaskNotFoundException exception) {
                 sendResponse(exchange, null, 404);
             } catch (Exception exception) {
                 sendResponse(exchange, null, 500);
             }
+        } else {
+            sendResponse(exchange, null, 404);
         }
     }
 
     protected void post(HttpExchange exchange) throws IOException {
-        try {
-            String json = new String(exchange.getRequestBody().readAllBytes(), CHARSET);
-            T value = gson.fromJson(json, getType());
-            long id = value.getId();
-            Optional<T> optionalValue = getById(id);
+        String[] pathComponents = exchange.getRequestURI().getPath().split("/");
 
-            if (optionalValue.isEmpty()) {
-                id = create(value);
-            } else {
-                update(value);
+        if (pathComponents.length == 2) {
+            try {
+                String json = new String(exchange.getRequestBody().readAllBytes(), CHARSET);
+                T value = gson.fromJson(json, getType());
+                long id = value.getId();
+                Optional<T> optionalValue = getById(id);
+
+                if (optionalValue.isEmpty()) {
+                    if (!checkIntersection(value)) {
+                        throw new TasksIntersectException("Can't create task");
+                    }
+                    id = create(value);
+                } else {
+                    update(value);
+                }
+                sendResponse(exchange, getById(id).get(), 200);
+            } catch (JsonSyntaxException exception) {
+                sendResponse(exchange, null, 400);
+            } catch (TasksIntersectException exception) {
+                sendResponse(exchange, null, 406);
+            } catch (Exception exception) {
+                sendResponse(exchange, null, 500);
             }
-            sendResponse(exchange, getById(id).get(), 200);
-        } catch (JsonSyntaxException exception) {
-            sendResponse(exchange, null, 400);
-        } catch (TasksIntersectException exception) {
-            sendResponse(exchange, null, 406);
-        } catch (Exception exception) {
-            sendResponse(exchange, null, 500);
+        } else {
+            sendResponse(exchange, null, 404);
         }
     }
 
     protected void delete(HttpExchange exchange) throws IOException {
         String[] pathComponents = exchange.getRequestURI().getPath().split("/");
-        if (pathComponents.length != 3) return;
 
-        try {
-            long id = Long.parseLong(pathComponents[2]);
-            delete(id);
-            sendResponse(exchange, null, 200);
-        } catch (NumberFormatException exception) {
-            sendResponse(exchange, null, 400);
-        } catch (Exception exception) {
-            sendResponse(exchange, null, 500);
+        if (pathComponents.length == 3) {
+            try {
+                long id = Long.parseLong(pathComponents[2]);
+                delete(id);
+                sendResponse(exchange, null, 200);
+            } catch (NumberFormatException exception) {
+                sendResponse(exchange, null, 404);
+            } catch (Exception exception) {
+                sendResponse(exchange, null, 500);
+            }
+        } else {
+            sendResponse(exchange, null, 404);
         }
     }
 }

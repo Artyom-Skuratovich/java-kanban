@@ -43,4 +43,9 @@ public class TaskHandler extends BaseHttpHandler<Task> {
     protected Class<Task> getType() {
         return Task.class;
     }
+
+    @Override
+    protected boolean checkIntersection(Task value) {
+        return manager.checkIntersection(value);
+    }
 }

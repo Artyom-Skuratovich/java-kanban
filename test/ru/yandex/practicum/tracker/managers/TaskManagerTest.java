@@ -203,11 +203,9 @@ abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     @Test
-    public void shouldThrowIllegalArgumentExceptionWhenCheckIntersectWithInvalidStartTime() {
+    public void shouldReturnTrueWhenCheckIntersectWithInvalidStartTime() {
         Subtask subtask = new Subtask("Subtask", "Subtask", LocalDateTime.now().minusMinutes(16), Duration.ofMinutes(20), 0);
-        Throwable thrown = assertThrows(IllegalArgumentException.class, () -> taskManager.checkIntersection(subtask),
-                "Ошибка при выбросе исключения");
-        assertEquals("Start time is out of range", thrown.getMessage(), "Неверное сообщение в исключении");
+        assertTrue(taskManager.checkIntersection(subtask), "Неверное значение при добавлении задачи");
     }
 
     @Test

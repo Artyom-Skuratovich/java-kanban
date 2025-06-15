@@ -102,7 +102,11 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public boolean checkIntersection(Task task) {
         Objects.requireNonNull(task, "Task cannot be null");
-        return scheduler.isAvailable(task.getStartTime(), task.getEndTime());
+        try {
+            return scheduler.isAvailable(task.getStartTime(), task.getEndTime());
+        } catch (IllegalArgumentException exception) {
+            return true;
+        }
     }
 
     @Override
@@ -333,7 +337,8 @@ public class InMemoryTaskManager implements TaskManager {
             Duration subtaskDuration = subtask.getDuration();
             LocalDateTime subtaskStartTime = subtask.getStartTime();
 
-            if ((subtaskStartTime != null) && (subtaskDuration != null)) {
+            if ((subtaskStartTime != null) && (subtaskDuration != null)
+                    && scheduler.isInRange(subtaskStartTime) && scheduler.isInRange(subtask.getEndTime())) {
                 if ((startTime == null) || subtaskStartTime.isBefore(startTime)) {
                     startTime = subtaskStartTime;
                 }
@@ -357,12 +362,14 @@ public class InMemoryTaskManager implements TaskManager {
         if ((task.getStartTime() == null) || (task.getDuration() == null)) {
             return;
         }
-        T currentTask = map.get(task.getId());
-        if (removeIfExists && (currentTask != null)) {
-            scheduler.removeSchedule(currentTask);
-        }
-        if (!scheduler.addSchedule(task)) {
-            throw new TasksIntersectException("Can't schedule task because it intersects another one");
+        if (scheduler.isInRange(task.getStartTime()) && scheduler.isInRange(task.getEndTime())) {
+            T currentTask = map.get(task.getId());
+            if (removeIfExists && (currentTask != null)) {
+                scheduler.removeSchedule(currentTask);
+            }
+            if (!scheduler.addSchedule(task)) {
+                throw new TasksIntersectException("Can't schedule task because it intersects another one");
+            }
         }
     }
 

@@ -43,4 +43,9 @@ public class SubtaskHandler extends BaseHttpHandler<Subtask> {
     protected Class<Subtask> getType() {
         return Subtask.class;
     }
+
+    @Override
+    protected boolean checkIntersection(Subtask value) {
+        return manager.checkIntersection(value);
+    }
 }

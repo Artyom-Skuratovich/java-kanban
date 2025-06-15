@@ -49,6 +49,11 @@ public class EpicHandler extends BaseHttpHandler<Epic> {
     }
 
     @Override
+    protected boolean checkIntersection(Epic value) {
+        return manager.checkIntersection(value);
+    }
+
+    @Override
     protected void get(HttpExchange exchange) throws IOException {
         String[] pathComponents = exchange.getRequestURI().getPath().split("/");
 
@@ -63,9 +68,7 @@ public class EpicHandler extends BaseHttpHandler<Epic> {
 
                 List<Subtask> subtasks = manager.getSubtaskListForEpic(id);
                 sendResponse(exchange, subtasks, 200);
-            } catch (NumberFormatException exception) {
-                sendResponse(exchange, null, 400);
-            } catch (TaskNotFoundException exception) {
+            } catch (NumberFormatException | TaskNotFoundException exception) {
                 sendResponse(exchange, null, 404);
             } catch (Exception exception) {
                 sendResponse(exchange, null, 500);
