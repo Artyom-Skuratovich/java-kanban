@@ -374,7 +374,7 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     private void addToPriorityList(Task task) {
-        if (task.getStartTime() != null) {
+        if ((task.getStartTime() != null) && scheduler.isInRange(task.getStartTime())) {
             // Remove if already exists.
             prioritizedTasks.remove(task);
             prioritizedTasks.add(task);
